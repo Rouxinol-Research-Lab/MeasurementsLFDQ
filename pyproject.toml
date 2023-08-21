@@ -1,0 +1,21 @@
+[project]
+name = "MeasurementLFDQ"
+version = "0.1.1"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "pyvisa",
+    "IPython",
+    "toml",
+    "serial",
+]
+
+[tool.setuptools.packages.find]
+where = ['src']
+include = ["measurements",'instruments']  # ["*"] by default
+namespaces = false
+
+[project.scripts]
+powersweep = "measurements.powersweep:main"
+fluxsweep = "measurements.fluxsweep:main"
+twotone = "measurements.twotone:main"

@@ -1,0 +1,30 @@
+
+qubitname = 'tii_sample1'
+
+
+na_address = "TCPIP0::169.254.101.105::inst0::INSTR"
+att_address = "TCPIP0::169.254.101.101::inst0::INSTR"
+RFsource_address = 'TCPIP0::169.254.101.104::inst0::INSTR'
+Voltage_Source_address = "GPIB0::2::INSTR"
+Voltage_Source_port = 8
+
+average_points = 999
+center_frequency = 7295e6
+span_frequency = 10e6
+npoints = 3
+if_freq = 5e3
+average_time = 0.1
+
+RFSource_amplitude = 0
+passive_RF_attenuation = 40
+passive_na_attenuation = 0
+na_amplitude = -5
+
+attenuator_attenuation = 50
+
+Voltage_Source_voltage = -2.5
+
+RFSource_frequency_initial = 8200e6
+RFSource_frequency_final = 8300e6
+RFSource_frequency_step = 10e6
+

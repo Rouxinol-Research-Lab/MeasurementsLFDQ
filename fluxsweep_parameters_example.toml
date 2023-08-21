@@ -1,0 +1,19 @@
+qubitname = 'tii_sample'
+
+
+na_address = "TCPIP0::169.254.101.105::inst0::INSTR"
+att_address = "TCPIP0::169.254.101.101::inst0::INSTR"
+source_address = "GPIB0::2::INSTR"
+
+source_port = 8
+
+average_points = 999
+center_frequency = 7350e6
+span_frequency = 50e6
+npoints = 250
+if_freq = 1e3
+average_time = 120
+attenuation = 30
+volt_initial = -10
+volt_final = 10
+volt_step = 1
