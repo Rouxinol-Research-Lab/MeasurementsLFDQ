@@ -93,7 +93,10 @@ def measure(qubitname,
     phases[:] = 0
 
     na.power = 1
-    sleep(0.1)
+    sleep(0.05)
+
+    na.scale(1,5)
+    na.autoscale(2)
 
     try:
         for idx,att_val in enumerate(attenuations):

@@ -19,3 +19,4 @@ namespaces = false
 powersweep = "measurements.powersweep:main"
 fluxsweep = "measurements.fluxsweep:main"
 twotone = "measurements.twotone:main"
+vna = "measurements.vna:main"

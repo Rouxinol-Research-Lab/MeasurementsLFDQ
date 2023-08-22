@@ -13,9 +13,12 @@ class E5063A_driver(VisaInstrument):
         self._if_bandwidth = self.if_bandwidth_frequency
         self._data_format = self.data_format
 
-    def autoscale(self):
+    def autoscale(self,trace_idx):
         '''This command executes the auto scale function. The Auto Scale function automatically adjusts the value of the reference division line and the scale per division to display the trace appropriately.'''
-        self.write(':DISPlay:WINDow1:TRACe1:Y:SCALe:AUTO')
+        self.write(':DISPlay:WINDow1:TRACe'+str(trace_idx)+':Y:SCALe:AUTO')
+
+    def scale(self,trace_idx,value):
+        self.write(':DISP:WIND:TRAC'+str(trace_idx)+':Y:PDIV '+str(value))
 
     @property
     def sweep_time(self):
