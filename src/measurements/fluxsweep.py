@@ -19,7 +19,9 @@ def loadparams(filename):
 
     port = parameters['source_port']
 
-    source = SIM928_driver(parameters['source_address'],port)
+    current_step_time = parameters['current_step_time']
+
+    source = SIM928_driver(parameters['source_address'],port, step_time=current_step_time)
 
     attenuation = parameters['attenuation'] 
     ave_points = parameters['average_points']
@@ -30,6 +32,8 @@ def loadparams(filename):
     npoints = parameters['npoints']
     if_freq = parameters['if_freq']
     average_time = parameters['average_time']
+
+    
 
     volt_initial = parameters['volt_initial']
     volt_final = parameters['volt_final']

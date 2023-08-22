@@ -23,7 +23,8 @@ def loadparams(filename):
     RFsource = E8257D_driver(parameters['RFsource_address'])
 
     port = parameters['Voltage_Source_port']
-    Voltsource = SIM928_driver(parameters['Voltage_Source_address'],port)
+    current_step_time =  parameters['current_step_time']
+    Voltsource = SIM928_driver(parameters['Voltage_Source_address'],port,step_time=current_step_time)
 
 
     naverages = parameters['average_points']
