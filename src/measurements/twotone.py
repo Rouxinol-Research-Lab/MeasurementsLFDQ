@@ -10,6 +10,7 @@ from toml import load
 import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
+import datetime
 
 #TODO set amplitude of na
 
@@ -177,6 +178,15 @@ def main():
         name = measure( na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qubitname)
         
         print(name)
+
+    if command == 'time':
+        _, _,_,_,_,_,_,_,ave_time, _,_, _, _, _, qfreq_init, qfreq_final, qfreq_step,_ = loadparams(filename)
+
+        time= len(np.arange(qfreq_init,qfreq_final,qfreq_step))*ave_time
+
+        timedelta_obj = datetime.timedelta(seconds=time)
+        print("Time of measurement: ",timedelta_obj)
+        
         
     elif command == "plot":
         plot(filename)

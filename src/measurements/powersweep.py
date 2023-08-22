@@ -7,7 +7,7 @@ from toml import load
 import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
-
+import datetime
 
 def loadparams(filename):
 
@@ -164,7 +164,16 @@ def main():
                 ave_time)
         
         print(name)
+
+    if command == 'time':
+        _,_,_,_,_,_,_,ave_time,att_init,att_final,att_step,_ = loadparams(filename)
+
+        time= len(np.arange(att_init,att_final,att_step))*ave_time
+
+        timedelta_obj = datetime.timedelta(seconds=time)
+        print("Time of measurement: ",timedelta_obj)
         
+
     elif command == "plot":
         plot(filename)
 

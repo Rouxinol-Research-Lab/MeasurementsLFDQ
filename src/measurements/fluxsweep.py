@@ -8,6 +8,7 @@ from toml import load
 import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
+import datetime
 
 def loadparams(filename):
 
@@ -183,6 +184,15 @@ def main():
                 attenuation)
         
         print(name)
+
+    if command == 'time':
+        _,_,_,_,_,_,_,_,ave_time,volt_init,volt_final,volt_step,_,_ = loadparams(filename)
+
+        time= len(np.arange(volt_init,volt_final,volt_step))*ave_time
+
+        timedelta_obj = datetime.timedelta(seconds=time)
+        print("Time of measurement: ",timedelta_obj)
+        
         
     elif command == "plot":
         plot(filename)
