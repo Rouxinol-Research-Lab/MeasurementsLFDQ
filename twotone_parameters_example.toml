@@ -26,6 +26,6 @@ Voltage_Source_voltage = -5
 current_step_time = 0.1
 
 RFSource_frequency_initial = 2000e6
-RFSource_frequency_final = 9500e6
+RFSource_frequency_final = 18000e6
 RFSource_frequency_step = 50e6
 

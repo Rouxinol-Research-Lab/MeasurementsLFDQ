@@ -158,7 +158,7 @@ def plot(filename):
     mags = np.abs(data['Z'])
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.pcolor(qfreqs*1e-6,20*np.log10(mags))
+    plt.plot(qfreqs*1e-6,20*np.log10(mags))
     ax.tick_params(labelsize=20)
     ax.set_ylabel('S21 (dB)',fontsize=20)
     ax.set_xlabel('Frequency (MHz)',fontsize=20)
