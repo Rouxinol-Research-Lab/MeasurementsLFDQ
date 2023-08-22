@@ -165,8 +165,14 @@ def main():
     command = args[1]
     filename = args[2]
 
+    na,att,source,qubitname,center_freq,span_freq,npoints,if_freq,ave_time,volt_init,volt_final,volt_step,naverages,attenuation = loadparams(filename)
+    time= len(np.arange(volt_init,volt_final,volt_step))*ave_time
+
+    timedelta_obj = datetime.timedelta(seconds=time)
+
     if command == "measure":
-        na,att,source,qubitname,center_freq,span_freq,npoints,if_freq,ave_time,volt_init,volt_final,volt_step,naverages,attenuation = loadparams(filename)
+
+        print("Time of measurement: ",timedelta_obj)
 
         name = measure(qubitname,
                 na,
@@ -186,11 +192,6 @@ def main():
         print(name)
 
     if command == 'time':
-        _,_,_,_,_,_,_,_,ave_time,volt_init,volt_final,volt_step,_,_ = loadparams(filename)
-
-        time= len(np.arange(volt_init,volt_final,volt_step))*ave_time
-
-        timedelta_obj = datetime.timedelta(seconds=time)
         print("Time of measurement: ",timedelta_obj)
         
         
