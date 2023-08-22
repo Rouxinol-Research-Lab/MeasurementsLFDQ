@@ -1,5 +1,5 @@
 
-qubitname = 'tii_sample'
+qubitname = 'olivier_sample'
 
 
 na_address = "TCPIP0::169.254.101.105::inst0::INSTR"
