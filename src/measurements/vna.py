@@ -149,20 +149,19 @@ def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave
     filename = name+'.npz'
     return filename
 
+# TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    type = data['na_measurement']
+    type = data['type']
     freqs = data['freqs']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
     plt.plot(freqs*1e-6,20*np.log10(mag))
-    cbar=plt.colorbar(label='S21 (dB)')
-    cbar.ax.tick_params(labelsize=20)
     ax.tick_params(labelsize=20)
     ax.set_xlabel('Frequency (MHz)',fontsize=20)
-    ax.set_ylabel(type+' (dB)',fontsize=20)
+    #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
 
