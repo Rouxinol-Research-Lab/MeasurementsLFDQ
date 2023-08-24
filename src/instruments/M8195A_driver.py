@@ -1,4 +1,6 @@
 from struct import unpack
+import numpy as np
+from instruments.SCPI_socket import *
 
 def generateData(numberOfChannels, freq, tFcav, tPulse):
     awgRate = 65e9/numberOfChannels
@@ -10,7 +12,7 @@ def generateData(numberOfChannels, freq, tFcav, tPulse):
 
     x = np.arange(0,pulsePeriod*numberOfPeriods,1/awgRate)
 
-    pulseOsc = array(2**7*np.sin(2*np.pi*freq*x),dtype=datatype)
+    pulseOsc = np.array(2**7*np.sin(2*np.pi*freq*x),dtype=datatype)
     
     missingPoints = int(np.ceil(pulseOsc.nbytes/256)*256) - int(pulseOsc.nbytes)
     if missingPoints != 0:
@@ -29,105 +31,12 @@ def convertToStr(data):
     
     return data_str
 
-def allocMemory(session,nbytes):
-    if not isinstance(nbytes,int):
-        raise TypeError("Parameter nbytes must be an integer!")
-        
-    if nbytes%256 != 0:
-        raise ValueError("Parameter nbytes must be a multiple of 256!")
-    
-    print('Deleting previously defined segment.')
-    SCPI_sock_send(session,":TRAC1:DEL:ALL")
-    print("AWG response: "+ SCPI_sock_query(session,"SYST:ERR?"))
 
-    print('Defining segment size and setting all values to 0.')
-    SCPI_sock_send(session,":TRAC1:DEF 1,"+ str(nbytes) +",0")
-    print("AWG response: "+ SCPI_sock_query(session,"SYST:ERR?"))
-
-    print('Checking segment defined:')
-    print("id,size")
-    print(SCPI_sock_query(session,":TRAC1:CAT?"))
-    print("AWG response: "+ SCPI_sock_query(session,"SYST:ERR?"))
-    
-
-def sendData(session,channel, x_str,delay, numberOfChannels):
-        
-    awgRate = 65e9/numberOfChannels
-    
-    delayInBytes = int(np.ceil(delay*awgRate/256)*256)
-    
-    print("Sendind waveform to channel {}".format(channel))
-    SCPI_sock_send(session, ':TRAC{}:DATA 1,{},{}'.format(channel, delayInBytes, x_str))
-    print("AWG response:" + SCPI_sock_query(session,"SYST:ERR?"))
-    
-    
-def setNumberOfChannels(session,numberOfChannels):
-    if numberOfChannels > 2:
-        raise ValueError("numberOfChannels cannot be higher than 2 for this instrument! Check for more licenses.")
-        
-    if numberOfChannels == 1:
-        print("Setting system to singular.")
-        SCPI_sock_send(session,":INST:DACM SING")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-        print("Setting memory division to 1.")
-        SCPI_sock_send(session,":INST:MEM:EXT:RDIV DIV1")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-        print("Setting channel 1 memory to extended.")
-        SCPI_sock_send(session,":TRAC1:MMOD EXT")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-        
-    else:  # numberOfChannel is 2
-        print("Setting system to dual.")
-        SCPI_sock_send(session,":INST:DACM DUAL")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-        print("Setting memory division to 2.")
-        SCPI_sock_send(session,":INST:MEM:EXT:RDIV DIV2")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-        print("Setting channel 1 memory to extended.")
-        SCPI_sock_send(session,":TRAC1:MMOD EXT")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-        print("Setting channel 4 memory to extended.")
-        SCPI_sock_send(session,":TRAC4:MMOD EXT")
-        print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-        
-def awgToggleChannelOuput(session,channel):
-    print("Checking output state from channel {}.".format(channel))
-    result = int(SCPI_sock_query(session,":OUTP{}?".format(channel)))
-    print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-    
-    print("Changing output state.")
-    if result == 0:
-        SCPI_sock_send(session,":OUTP{} 1".format(channel))
-    else:
-        SCPI_sock_send(session,":OUTP{} 0".format(channel))
-    print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-    
-def disableChannel(session,channel):
-    SCPI_sock_send(session,":OUTP{} 0".format(channel))
-    print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-    
-def enableChannel(session,channel):
-    SCPI_sock_send(session,":OUTP{} 1".format(channel))
-    print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-    
-def awgTurnOn(session):
-    SCPI_sock_send(session,":INIT:IMM")    
-    print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
-    
-def awgTurnOff(session):
-    SCPI_sock_send(session,":ABOR")
-    print("AWG Response: " + SCPI_sock_query(session,"SYST:ERR?"))
 
 def find_rate_and_period(freq,nsamples,nperiod,numberOfChannels):
     foundit = False
     
-    possible_rate = -1;
+    possible_rate = -1
     
     while(not foundit):
         possible_rate = nsamples*freq/nperiod/numberOfChannels
@@ -141,12 +50,109 @@ def find_rate_and_period(freq,nsamples,nperiod,numberOfChannels):
             
     return possible_rate*numberOfChannels,nperiod
 
-class M8195A_driver(Instrument):
-    def __init__(self, address, alias):
-        super().__init__(address,alias)
-        self.stop()
-        self.write(":INST:DACM SING")
-        self.write(":INST:MEM:EXT:RDIV DIV1")
+class M8195A_driver():
+    def __init__(self, address):
+        self._session = SCPI_sock_connect(address)
+
+    def toggleChannelOuput(self,channel):
+        print("Checking output state from channel {}.".format(channel))
+        result = int(SCPI_sock_query(self._session,":OUTP{}?".format(channel)))
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+        
+        print("Changing output state.")
+        if result == 0:
+            SCPI_sock_send(self._session,":OUTP{} 1".format(channel))
+        else:
+            SCPI_sock_send(self._session,":OUTP{} 0".format(channel))
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def start(self):
+        SCPI_sock_send(self._session,":INIT:IMM")    
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+        
+    def stop(self):
+        SCPI_sock_send(self._session,":ABOR")
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def close(self):
+        SCPI_sock_close(self._session)
+
+    def allocMemory(self,nbytes):
+        if not isinstance(nbytes,int):
+            raise TypeError("Parameter nbytes must be an integer!")
+            
+        if nbytes%256 != 0:
+            raise ValueError("Parameter nbytes must be a multiple of 256!")
+        
+        print('Deleting previously defined segment.')
+        SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
+        print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
+
+        print('Defining segment size and setting all values to 0.')
+        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(nbytes) +",0")
+        print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
+
+        print('Checking segment defined:')
+        print("id,size")
+        print(SCPI_sock_query(self._session,":TRAC1:CAT?"))
+        print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def sendData(self,channel, x_str,delay, numberOfChannels):
+            
+        awgRate = 65e9/numberOfChannels
+        
+        delayInBytes = int(np.ceil(delay*awgRate/256)*256)
+        
+        print("Sendind waveform to channel {}".format(channel))
+        SCPI_sock_send(self._session, ':TRAC{}:DATA 1,{},{}'.format(channel, delayInBytes, x_str))
+        print("AWG response:" + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def disableChannel(self,channel):
+        SCPI_sock_send(self._session,":OUTP{} 0".format(channel))
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+        
+    def enableChannel(self,channel):
+        SCPI_sock_send(self._session,":OUTP{} 1".format(channel))
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+
+    def setNumberOfChannels(self,numberOfChannels):
+        if numberOfChannels > 2:
+            raise ValueError("numberOfChannels cannot be higher than 2 for this instrument! Check for more licenses.")
+            
+        if numberOfChannels == 1:
+            print("Setting system to singular.")
+            SCPI_sock_send(self._session,":INST:DACM SING")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+            print("Setting memory division to 1.")
+            SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV1")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+            print("Setting channel 1 memory to extended.")
+            SCPI_sock_send(self._session,":TRAC1:MMOD EXT")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+            
+        else:  # numberOfChannel is 2
+            print("Setting system to dual.")
+            SCPI_sock_send(self._session,":INST:DACM DUAL")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+            print("Setting memory division to 2.")
+            SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV2")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+            print("Setting channel 1 memory to extended.")
+            SCPI_sock_send(self._session,":TRAC1:MMOD EXT")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+            print("Setting channel 4 memory to extended.")
+            SCPI_sock_send(self._session,":TRAC4:MMOD EXT")
+            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+            
+
+        
 
     def _convertToByte(self,data, A):
 
@@ -177,29 +183,6 @@ class M8195A_driver(Instrument):
         sCmd = b':TRAC%d:DATA %d,%d,' % (ch, seq, start)
         self.write_raw(sCmd + sHead + data[start:start+length].tobytes())
 
-    def start(self):
-        '''
-        Start signal generation on all channels.
-        '''
-        self.write('INIT:IMM')
-
-    def stop(self):
-        '''
-        Stop signal generation on all channels
-        '''
-        self.write(':ABOR')
-
-    def enableCh(self,ch):
-        '''
-        Switch the amplifier of the output path for a channel on.
-        '''
-        self.write(":OUTP%d ON" % ch)
-
-    def disableCh(self,ch):
-        '''
-        Switch the amplifier of the output path for a channel off.
-        '''
-        self.write(":OUTP%d OFF" % ch)
 
     def getTriggerMode(self):
         '''
@@ -219,40 +202,43 @@ class M8195A_driver(Instrument):
         '''
             Set the continuous mode.
         '''
-        self.write(":INIT:CONT ON")
-        self.write(":INIT:GATE OFF")
+        SCPI_sock_send(self._session,":INIT:CONT ON")
+        SCPI_sock_send(self._session,":INIT:GATE OFF")
+
 
     def setTriggerModeToGated(self):
         '''
             Set the gated mode.
         '''
-        self.write(":INIT:GATE ON")
-        self.write(":INIT:CONT OFF")
+        SCPI_sock_send(self._session,":INIT:GATE ON")
+        SCPI_sock_send(self._session,":INIT:CONT OFF")
+
 
     def setTriggerModeToTriggered(self):
         '''
             Set the triggered mode.
         '''
-        self.write(":INIT:CONT OFF")
-        self.write(":INIT:GATE OFF")
+        SCPI_sock_send(self._session,":INIT:GATE OFF")
+        SCPI_sock_send(self._session,":INIT:CONT OFF")
+
 
     def forceTrigger(self):
-        self.write(":TRIG:BEG")
-
-    @property
-    def sampleRate(self):
-        '''
-            Set or query the sample frequency of the output DAC.
-
-        '''
-        return float(self.query(":FREQ:RAST?")[:-1])
+        SCPI_sock_send(self._session,":TRIG:BEG")
 
 
-    @sampleRate.setter
-    def sampleRate(self,freq):
+    def get_sampleRate(self):
         '''
             Set or query the sample frequency of the output DAC.
         '''
+
+        return float(SCPI_sock_query(self._session,":FREQ:RAST?"))
+
+
+    def set_sampleRate(self,freq):
+        '''
+            Set or query the sample frequency of the output DAC.
+        '''
+        
 
         if type(freq) == str:
             if freq.lower() == 'min' or freq.lower() == 'max':
@@ -268,5 +254,4 @@ class M8195A_driver(Instrument):
         else:
             raise TypeError("Invalid type. Function accepts only str, float or int.")
 
-
-        self.write(":FREQ:RAST {}".format(freq))
+        SCPI_sock_send(self._session,":FREQ:RAST {}".format(freq))
