@@ -18,6 +18,15 @@ class E8257D_driver(VisaInstrument):
     def stop_mod(self):
         self.write(":OUTPUT:MOD OFF")
 
+    def start_pulse(self):
+        self.write(":PULM:STAT 1")
+
+    def stop_pulse(self):
+        self.write(":PULM:STAT 0")
+
+    def set_pulse_trigger_external(self):
+        self.write(':PULM:SOUR EXT')
+
     def is_mod_on(self):
         mod_on = self.query(":OUTPUT:MOD?").strip()
         return int(mod_on) == 1
