@@ -43,7 +43,7 @@ def findAwgRateAndPeriod(freq,numberOfChannels=1):
         npoints = (5+n)*multiple
         nperiod = int(65e9/freq/numberOfChannels)
         period = np.ceil(npoints/nperiod)
-        awgRate = npoints/period*freq
+        awgRate = int(npoints/period*freq)
         
         if awgRate < 53.76e9/numberOfChannels:
             n += 1
@@ -99,6 +99,25 @@ class M8195A_driver():
         print("id,size")
         print(SCPI_sock_query(self._session,":TRAC1:CAT?"))
         print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def setCWFrequency(self,freq):
+        self.stop()
+
+        _,awgRate,npoints = findAwgRateAndPeriod(freq)
+
+        SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
+        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(npoints) +",0")
+
+        self.set_sampleRate(awgRate)
+
+        x = np.arange(0,npoints*1/awgRate,1/awgRate)
+        awgOsc = np.array((2**7-1)*np.sin(2*np.pi*(freq)*x),dtype=np.int8)
+
+        # converte para os dados especificados
+        data_str = convertToStr(awgOsc)
+        # envia os dados para awg
+        SCPI_sock_send(self._session, ':TRAC1:DATA 1,0,{}'.format(data_str))
+
 
     def sendData(self,channel, x_str,delay, numberOfChannels):
             
