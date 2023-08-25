@@ -279,3 +279,9 @@ class M8195A_driver():
             raise TypeError("Invalid type. Function accepts only str, float or int.")
 
         SCPI_sock_send(self._session,":FREQ:RAST {}".format(freq))
+
+    def downloadWaveform(self):
+        size = int(SCPI_sock_query(self._session,':TRAC1:CAT?').split(',')[1])
+        data = SCPI_sock_query(self._session,':TRAC1:DATA? 1, 0,{}'.format(size))
+        return np.array(data.split(',')).astype(int)
+
