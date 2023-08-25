@@ -1,0 +1,36 @@
+qubitname = 'olivier_sample'
+
+
+na_address = "TCPIP0::169.254.101.105::inst0::INSTR"
+att_address = "TCPIP0::169.254.101.101::inst0::INSTR"
+Voltage_Source_address = "GPIB0::2::INSTR"
+Voltage_Source_port = 8
+
+voltage_source_state = false
+
+average_points = 999
+center_frequency = 7350e6
+span_frequency = 50e6
+npoints = 251
+if_freq = 1e3
+average_time = 60
+
+RFSource_amplitude_initial = 0
+RFSource_amplitude_final = 40
+RFSource_amplitude_step = 5
+
+RFSource_frequency_initial = 2000e6
+RFSource_frequency_final = 18000e6
+RFSource_frequency_step = 50e6
+
+
+RFSource_amplitude = 18
+passive_RF_attenuation = 26
+passive_na_attenuation = 0
+na_amplitude = 0
+
+attenuator_attenuation = 34
+
+
+Voltage_Source_voltage = -5
+current_step_time = 0.1

@@ -18,54 +18,62 @@ def loadparams(filename):
 
     na = E5063A_driver(parameters['na_address'])
     att = Agilent11713C_driver(parameters['att_address'])
-    port = parameters['Voltage_Source_port']
-    current_step_time =  parameters['current_step_time']
-    Voltsource = SIM928_driver(parameters['Voltage_Source_address'],port,step_time=current_step_time)
-    voltage = parameters['Voltage_Source_voltage']
-    voltageSourceState = parameters['voltage_source_state']
     RFsource = E8257D_driver(parameters['RFsource_address'])
 
-    ave_points = parameters['average_points']
+    port = parameters['Voltage_Source_port']
+    current_step_time =  parameters['current_step_time']
+    voltageSourceState = parameters['voltage_source_state']
+    Voltsource = SIM928_driver(parameters['Voltage_Source_address'],port,step_time=current_step_time)
+
+
+    naverages = parameters['average_points']
     qubitname = parameters['qubitname']
 
-    center_frequency = parameters['center_frequency']
-    span_frequency = parameters['span_frequency']
+    center_freq = parameters['center_frequency']
+    span_freq = parameters['span_frequency']
     npoints = parameters['npoints']
     if_freq = parameters['if_freq']
-
     average_time = parameters['average_time']
-    qfreq_init=parameters['RFSource_frequency_initial']
-    qfreq_final=parameters['RFSource_frequency_final']
-    qfreq_step =parameters['RFSource_frequency_step']
-
-    attenuation_initial = parameters['attenuation_initial']
-    attenuation_final = parameters['attenuation_final']
-    attenuation_step = parameters['attenuation_step']
-
-
-    return na,qfreq_init, qfreq_final, qfreq_step, att,RFsource,Voltsource,voltage,voltageSourceState,qubitname,center_frequency,span_frequency,npoints,if_freq,average_time,attenuation_initial,attenuation_final,attenuation_step,ave_points
 
 
 
-def measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
-                na,
-                att,
-                center_frequency,
-                span_frequency,
-                if_freq,
-                npoints,
-                ave_points,qfreq_init, qfreq_final, qfreq_step,
-                attenuation_initial,attenuation_final,attenuation_step,
-                average_time):
 
-    typename = "powersweep"
-    print(na)
-    na.average_points = ave_points
+    attenuator_att = parameters['attenuator_attenuation']
+    na_amp = parameters['na_amplitude']
+
+    voltage = parameters['Voltage_Source_voltage']
+
+    qfreq_init = parameters['RFSource_frequency_initial']
+    qfreq_final = parameters['RFSource_frequency_final']
+    qfreq_step = parameters['RFSource_frequency_step']
+
+    qamp_init = parameters['RFSource_amplitude_initial']
+    qamp_final = parameters['RFSource_amplitude_final']
+    qamp_step = parameters['RFSource_amplitude_step']
+
+    passive_qubit_att = parameters['passive_RF_attenuation']
+    passive_na_att = parameters['passive_na_attenuation']
+
+
+    return na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_att,na_amp,average_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qamp_init,qamp_final,qamp_step,passive_qubit_att,qubitname
+
+
+
+
+def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_att,na_amp,average_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qamp_init,qamp_final,qamp_step,passive_qubit_att,qubitname):
+
+    typename = "powersweep_twotone"
+    na.average_points = naverages
     na.averaging = 1
     na.power = 0
 
-    na.center_frequency = center_frequency
-    na.span_frequency = span_frequency
+    Voltsource.ramp_voltage(0)
+    Voltsource.turn_off()
+
+    na.amplitude = na_amp
+    att.set_attenuation(attenuator_att)
+    na.center_frequency = center_freq
+    na.span_frequency = span_freq
 
     na.sweep_points = npoints
     na.if_bandwidth_frequency = if_freq
@@ -73,9 +81,9 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
     na.parameter = 'S21'
 
     qubitfreqs = np.arange(qfreq_init, qfreq_final, qfreq_step)
-    qamplitudes = np.arange(attenuation_initial,attenuation_final,attenuation_step)
+    qamplitudes = np.arange(qamp_init,qamp_final,qamp_step)
 
-    name = qubitname + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ typename + "_from_" + str(int(qfreq_init*1e-6)) + "_to_" + str(int(qfreq_final*1e-6))+"_cfreq_"+str(int(center_frequency*1e-6))
+    name = qubitname + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ typename + "_from_" + str(int(qfreq_init*1e-6)) + "_to_" + str(int(qfreq_final*1e-6))+"_cfreq_"+str(int(center_freq*1e-6))
 
 
     howtoplot = "\
@@ -103,6 +111,11 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
     mags[:] = -52
     phases[:] = 0
 
+    if voltageSourceState:
+        Voltsource.turn_on()
+        sleep(0.05)
+        Voltsource.ramp_voltage(voltage)
+    
     RFsource.start_rf()
     na.power = 1
     sleep(0.1)
@@ -110,7 +123,7 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
     try:
         for idx_amp,qamp in enumerate(qamplitudes):
             RFsource.set_amplitude(qamp)
-            sleep(0.1)
+            sleep(0.05)
             for idx,qfreq in enumerate(qubitfreqs):
                 clear_output(wait=True)
 
@@ -123,13 +136,18 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
                 phases[idx,idx_amp] =  data[1::2][1]
 
                 plt.pause(0.05)
-                plt.pcolor(qamplitudes-att_qubit,qubitfreqs,mags)
+                plt.pcolor(qamplitudes-passive_qubit_att,qubitfreqs,mags)
 
         na.power = 0
         RFsource.stop_rf()
+
+        Voltsource.ramp_voltage(0)
+        Voltsource.turn_off()
+        
+
         Z = 10**(mags/20)*np.exp(1j*phases*np.pi/180)
 
-        np.savez(name,header=howtoplot,qubit_amplitudes = qamplitudes-att_qubit,qubit_freqs=qubitfreqs,Z=Z)
+        np.savez(name,header=howtoplot,qubit_amplitudes = qamplitudes-passive_qubit_att,qubit_freqs=qubitfreqs,Z=Z)
         clear_output(wait=True)
         plt.pause(0.05)
         plt.show()
@@ -140,6 +158,8 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
         pass
 
     filename = name+'.npz'
+
+    return filename
 
 def plot(filename):
     data = np.load(filename)
@@ -165,18 +185,9 @@ def main():
     filename = args[2]
 
     if command == "measure":
-        na, qfreq_init, qfreq_final, qfreq_step, att, port, current_step_time, Voltsource, voltage, voltageSourceState, RFsource, ave_points, qubitname, center_frequency , span_frequency , npoints , if_freq,average_time, attenuation_initial, attenuation_final ,attenuation_step = loadparams(filename)
+        na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_att,na_amp,average_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qamp_init,qamp_final,qamp_step,passive_qubit_att,qubitname = loadparams(filename)
 
-        name = measure(qubitname,Voltsource,voltage,voltageSourceState, RFsource,
-                na,
-                att,
-                center_frequency,
-                span_frequency,
-                if_freq,
-                npoints,
-                ave_points, qfreq_init, qfreq_final, qfreq_step,
-                attenuation_initial,attenuation_final,attenuation_step,
-                average_time)
+        name = measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_att,na_amp,average_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qamp_init,qamp_final,qamp_step,passive_qubit_att,qubitname)
         print(name)
 
     if command == 'time':
