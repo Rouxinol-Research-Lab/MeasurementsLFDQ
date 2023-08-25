@@ -33,22 +33,25 @@ def convertToStr(data):
 
 
 
-def find_rate_and_period(freq,nsamples,nperiod,numberOfChannels):
+def findAwgRateAndPeriod(freq,numberOfChannels=1):
+    multiple = 256
+    n = 0
+
     foundit = False
     
-    possible_rate = -1
-    
     while(not foundit):
-        possible_rate = nsamples*freq/nperiod/numberOfChannels
+        npoints = (5+n)*multiple
+        nperiod = int(65e9/freq/numberOfChannels)
+        period = np.ceil(npoints/nperiod)
+        awgRate = int(npoints/period*freq)
         
-        if possible_rate < 53.76e9/numberOfChannels:
-            nperiod -= 1
-        elif possible_rate > 65e9/numberOfChannels:
-            nperiod += 1
+        if awgRate < 53.76e9/numberOfChannels:
+            n += 1
         else:
             foundit = True
-            
-    return possible_rate*numberOfChannels,nperiod
+    
+    
+    return period,awgRate,npoints
 
 class M8195A_driver():
     def __init__(self, address):
@@ -96,6 +99,25 @@ class M8195A_driver():
         print("id,size")
         print(SCPI_sock_query(self._session,":TRAC1:CAT?"))
         print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def setCWFrequency(self,freq):
+        self.stop()
+
+        _,awgRate,npoints = findAwgRateAndPeriod(freq)
+
+        SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
+        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(npoints) +",0")
+
+        self.set_sampleRate(awgRate)
+
+        x = np.arange(0,npoints*1/awgRate,1/awgRate)
+        awgOsc = np.array((2**7-1)*np.sin(2*np.pi*(freq)*x),dtype=np.int8)
+
+        # converte para os dados especificados
+        data_str = convertToStr(awgOsc)
+        # envia os dados para awg
+        SCPI_sock_send(self._session, ':TRAC1:DATA 1,0,{}'.format(data_str))
+
 
     def sendData(self,channel, x_str,delay, numberOfChannels):
             
@@ -232,6 +254,8 @@ class M8195A_driver():
         '''
 
         return float(SCPI_sock_query(self._session,":FREQ:RAST?"))
+    
+
 
 
     def set_sampleRate(self,freq):
@@ -255,3 +279,9 @@ class M8195A_driver():
             raise TypeError("Invalid type. Function accepts only str, float or int.")
 
         SCPI_sock_send(self._session,":FREQ:RAST {}".format(freq))
+
+    def downloadWaveform(self):
+        size = int(SCPI_sock_query(self._session,':TRAC1:CAT?').split(',')[1])
+        data = SCPI_sock_query(self._session,':TRAC1:DATA? 1, 0,{}'.format(size))
+        return np.array(data.split(',')).astype(int)
+
