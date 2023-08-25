@@ -33,22 +33,25 @@ def convertToStr(data):
 
 
 
-def find_rate_and_period(freq,nsamples,nperiod,numberOfChannels):
+def findAwgRateAndPeriod(freq,numberOfChannels=1):
+    multiple = 256
+    n = 0
+
     foundit = False
     
-    possible_rate = -1
-    
     while(not foundit):
-        possible_rate = nsamples*freq/nperiod/numberOfChannels
+        npoints = (5+n)*multiple
+        nperiod = int(65e9/freq/numberOfChannels)
+        period = np.ceil(npoints/nperiod)
+        awgRate = npoints/period*freq
         
-        if possible_rate < 53.76e9/numberOfChannels:
-            nperiod -= 1
-        elif possible_rate > 65e9/numberOfChannels:
-            nperiod += 1
+        if awgRate < 53.76e9/numberOfChannels:
+            n += 1
         else:
             foundit = True
-            
-    return possible_rate*numberOfChannels,nperiod
+    
+    
+    return period,awgRate,npoints
 
 class M8195A_driver():
     def __init__(self, address):
@@ -232,6 +235,8 @@ class M8195A_driver():
         '''
 
         return float(SCPI_sock_query(self._session,":FREQ:RAST?"))
+    
+
 
 
     def set_sampleRate(self,freq):
