@@ -97,7 +97,7 @@ def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_at
     cbar=plt.colorbar(label='S21 (dB)')\n\
     cbar.ax.tick_params(labelsize=20)\n\
     ax.tick_params(labelsize=20)\n\
-    ax.set_ylabel('S21 (dB)',fontsize=20)\n\
+    ax.set_ylabel('Qubit Amplitude (dB)',fontsize=20)\n\
     ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
     ax.set_title('"+name+"',fontsize=16)\n\
     plt.show()"
@@ -163,17 +163,17 @@ def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_at
 
 def plot(filename):
     data = np.load(filename)
-    attenuations = data['atts']
-    freqs = data['freqs']
+    qamps = data['qubit_amplitudes']
+    freqs = data['qubit_freqs']
     mags = np.abs(data['Z'])
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.pcolor(attenuations,freqs*1e-6,20*np.log10(mags.T))
+    plt.pcolor(qamps,freqs*1e-6,20*np.log10(mags))
     cbar=plt.colorbar(label='S21 (dB)')
     cbar.ax.tick_params(labelsize=20)
     ax.tick_params(labelsize=20)
-    ax.set_xlabel('Attenuation (dB)',fontsize=20)
-    ax.set_ylabel('Frequency (MHz)',fontsize=20)
+    ax.set_xlabel('Qubit Amplitude (dB)',fontsize=20)
+    ax.set_ylabel('Frequency Cavity (MHz)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
 

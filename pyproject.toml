@@ -1,6 +1,6 @@
 [project]
 name = "MeasurementLFDQ"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
     "numpy",
     "matplotlib",
@@ -8,6 +8,7 @@ dependencies = [
     "IPython",
     "toml",
     "serial",
+    'jupyterlab',
 ]
 
 [tool.setuptools.packages.find]
@@ -19,4 +20,5 @@ namespaces = false
 powersweep = "measurements.powersweep:main"
 fluxsweep = "measurements.fluxsweep:main"
 twotone = "measurements.twotone:main"
+powersweep_twotone = "measurements.powersweep_twotone:main"
 vna = "measurements.vna:main"
