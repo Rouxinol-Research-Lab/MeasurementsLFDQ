@@ -45,16 +45,20 @@ def loadparams(filename):
 
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
-def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState):
+
+def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseLength,ampReference,decimation_value):
     typename = "sweep_pulse"
 
+    samplingRate = 1e9/decimation_value
 
     dg.setLevelAmplitude(1,3) # Set AB to 3 Volts
     dg.setTriggerSource(5) # Set trigger to be controlled by me
-    dg.setBurstCount(5000) # set 5000 shots
-    dg.setBurstPeriod(104e-6) # set period between shots
+    dg.setBurstCount(int(nBuffer*recordPerBuffers)) # set number of shots
+    dg.setBurstPeriod(pulsesPeriod) # set period between shots
     dg.setBurstMode(1)
-    dg.setDelay(3,2,100e-6)
+    dg.setDelay(3,2,pulseLength)
+
+    pointsPerRecord = int(pulseLength*samplingRate/256)*256
 
     RFsource.stop_rf()
     RFsource.start_pulse()
@@ -125,9 +129,9 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att
             clear_output(wait=True)
             RFsource.set_frequency(freq-if_freq)
             sleep(0.05)
-            I,Q = alazar.capture(0,5120,200,25,-8.512,save=False)
+            I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
             Is[idx] = I
-            Qs[idx] = Q
+            Qs[idx] = Q 
             
             mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
 

@@ -9,21 +9,25 @@ class ATS9872_driver():
     def __init__(self):
         self.AlazarMeasurerdll = ct.CDLL('C:\\Users\\Franscisco Rouxinol\Developer\\MeasurementLFDQ\\src\\instruments\\AlazarMeasurer.dll')            
 
-        # int alazarCapture( int preTriggerSamples,
-        #     int postTriggerSamples,
-        #     int recordsPerBuffer,
-        #     int buffersPerAcquisition,
-        #     double triggerLevel_volts,
-        #     double triggerRange_volts,
-        #     int waveformHeadCut,
-        #     int period,
-        #     bool save,
-        #     double* returnI, double* returnQ)
-        self.AlazarMeasurerdll.alazarCapture.argtypes = ct.c_int, ct.c_int, ct.c_int, ct.c_int, ct.c_double,ct.c_double, ct.c_int, ct.c_int, ct.c_bool, ct.POINTER(ct.c_char), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)
+    # retCode = alazarCapture(preTriggerSamples,
+    #     postTriggerSamples,
+    #     recordsPerBuffer,
+    #     buffersPerAcquisition,
+    #     triggerLevel_volts,
+    #     triggerRange_volts,
+    #     waveformHeadCut,
+    #     period,
+    #     timeout_ms, //time to wait for acquiring all records in buffer
+    #     decimation_value, // divides the clock 1 GHz/ decimation_value. It is 1,2 or 4, or multiples of 10
+    #     true,
+    #     errorMessage,
+    #     &returnI, &returnQ);
+
+        self.AlazarMeasurerdll.alazarCapture.argtypes = ct.c_int, ct.c_int, ct.c_int, ct.c_int, ct.c_double,ct.c_double, ct.c_int, ct.c_int,ct.c_int,ct.c_int, ct.c_bool, ct.POINTER(ct.c_char), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)
 
         self.AlazarMeasurerdll.alazarCapture.restype  = ct.c_int
 
-    def capture(self,preTriggerSamples, postTriggerSamples, recordsPerBuffer, buffersPerAcquisition, powerReference_dBm, inputLoad = 50, triggerLevel_volts = 0.5, triggerRange_volts = 3.0, waveformHeadCut = 100, period = 14, save = False):
+    def capture(self,preTriggerSamples, postTriggerSamples, recordsPerBuffer, buffersPerAcquisition, powerReference_dBm, inputLoad = 50, triggerLevel_volts = 0.5, triggerRange_volts = 3.0, waveformHeadCut = 100, period = 14, buffer_timeout_ms = 5000, decimation_value = 1, save = False):
         
         
         preTrigS = ct.c_int(preTriggerSamples)
@@ -35,6 +39,8 @@ class ATS9872_driver():
         trigRange = ct.c_double(triggerRange_volts)
         headCut = ct.c_int(waveformHeadCut)
         per = ct.c_int(period)
+        timeout_ms = ct.c_int(buffer_timeout_ms)
+        decimation_value =  ct.c_int(decimation_value)
         saveData = ct.c_bool(save)
         errorMessage = ct.create_string_buffer(80)
 
@@ -54,6 +60,8 @@ class ATS9872_driver():
                                         trigRange,
                                         headCut,
                                         per,
+                                        timeout_ms,
+                                        decimation_value,
                                         saveData,
                                         errorMessage,
                                         ct.byref(I),
