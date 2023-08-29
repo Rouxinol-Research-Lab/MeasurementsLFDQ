@@ -92,11 +92,14 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att
     howtoplot = "\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
-    mag = np.abs(data['Z'])\n\
+    mags = np.abs(data['Z'])\n\
+    attenuations =data['attenuations']\n\
     phase = np.unwrap(np.angle(data['Z']))\n\
     fig = plt.figure(figsize=(10,7))\n\
     ax = fig.gca()\n\
-    plt.plot(freqs*1e-6,20*np.log10(mag))\n\
+    plt.pcolor(attenuations,freqs*1e-6,20*np.log10(mags.T))\n\
+    cbar=plt.colorbar(label='S21 (dB)')\n\
+    cbar.ax.tick_params(labelsize=20)\n\
     ax.tick_params(labelsize=20)\n\
     ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
     ax.set_ylabel('S21 (dB)',fontsize=20)\n\
@@ -145,7 +148,7 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att
 
         Z = Is+Qs*1j
 
-        np.savez(name,header=howtoplot,freqs=freqs,Z=Z)
+        np.savez(name,header=howtoplot,freqs=freqs,Z=Z,attenuations=attenuations)
         clear_output(wait=True)
         plt.pause(0.05)
         plt.show()
@@ -161,13 +164,15 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    type = data['type']
     freqs = data['freqs']
-    mag = np.abs(data['Z'])
+    attenuations = data['attenuations']
+    mags = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.plot(freqs*1e-6,20*np.log10(mag))
+    plt.pcolor(attenuations,freqs*1e-6,20*np.log10(mags.T))
+    cbar=plt.colorbar(label='S21 (dB)')
+    cbar.ax.tick_params(labelsize=20)
     ax.tick_params(labelsize=20)
     ax.set_xlabel('Frequency (MHz)',fontsize=20)
     #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
