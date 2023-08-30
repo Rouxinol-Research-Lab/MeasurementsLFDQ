@@ -4,3 +4,4 @@ MeasurementLFDQ.egg-info
 __pycache__
 Instruments.py
 src/Instruments/AlazarMeasurer.dll
+/.vs
