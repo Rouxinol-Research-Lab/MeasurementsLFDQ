@@ -46,7 +46,7 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, qubit_freq_init,qubit_freq_final,qubit_freq_step, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses,pulseExcitationLength,ampReference,decimation_value):
+def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -76,12 +76,11 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     dg.setLevelAmplitude(2,3) # Set CD to 3 Volts
     dg.setTriggerSource(5) # Set trigger to be controlled by me
     dg.setBurstCount(int(nBuffer*recordPerBuffers)) # set number of shots
-    dg.setBurstPeriod(pulsesPeriod) # set period between shots
+    
     dg.setBurstMode(1)  
 
 
-    dg.setDelay(3,2,pulseExcitationLength) # B in relation to A
-    dg.setDelay(4,2,delayBetweenPulses) # C in relation to A
+    dg.setDelay(3,2,durationExcitation) # B in relation to A
     dg.setDelay(5,4,pulseMeasurementLength) # D in relation to C
     
     
@@ -107,10 +106,10 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     awg.setCWFrequency(if_freq)
 
 
-    qubitfreqs = np.arange(qubit_freq_init,qubit_freq_final,qubit_freq_step)
+    delays = np.arange(delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,)
 
-    Is = np.ndarray(len(qubitfreqs))
-    Qs = np.ndarray(len(qubitfreqs))
+    Is = np.ndarray(len(delays))
+    Qs = np.ndarray(len(delays))
 
     Is[:] = 1
     Qs[:] = 1
@@ -141,7 +140,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     fig = plt.figure()
     ax = fig.gca()
 
-    line, = ax.plot(qubitfreqs,20*np.log10(np.sqrt(Is**2+Qs**2)))
+    line, = ax.plot(delays,20*np.log10(np.sqrt(Is**2+Qs**2)))
 
 
     if voltageSourceState:
@@ -154,6 +153,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     RFsourceMeasurement.start_rf()
 
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
+    RFsourceMeasurement.set_frequency(freqExcitation)
     RFsourceExcitation.start_rf()
     awg.start()
     sleep(0.05)
@@ -161,9 +161,12 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
     try:
 
-        for idx, qfreq in enumerate(qubitfreqs):
+        for idx, delayBetweenPulses in enumerate(delays):
             clear_output(wait=True)
-            RFsourceExcitation.set_frequency(qfreq)
+
+            dg.setBurstPeriod(pulsesPeriod+delayBetweenPulses) # set period between shots
+            dg.setDelay(4,3,delayBetweenPulses) # C in relation to B
+
             sleep(0.05)
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
             Is[idx] = I
@@ -172,9 +175,8 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
             mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
 
             
-            
             plt.pause(0.05)
-            plt.plot(qubitfreqs,mags)
+            plt.plot(delays,mags)
 
             # line.set_ydata(mags)
             # ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
