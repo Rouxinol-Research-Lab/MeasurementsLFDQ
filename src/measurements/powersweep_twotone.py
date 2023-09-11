@@ -67,8 +67,9 @@ def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_at
     na.averaging = 1
     na.power = 0
 
-    Voltsource.ramp_voltage(0)
-    Voltsource.turn_off()
+    if voltageSourceState:
+        Voltsource.ramp_voltage(0)
+        Voltsource.turn_off()
 
     na.amplitude = na_amp
     att.set_attenuation(attenuator_att)
@@ -141,8 +142,9 @@ def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_at
         na.power = 0
         RFsource.stop_rf()
 
-        Voltsource.ramp_voltage(0)
-        Voltsource.turn_off()
+        if voltageSourceState:
+            Voltsource.ramp_voltage(0)
+            Voltsource.turn_off()
         
 
         Z = 10**(mags/20)*np.exp(1j*phases*np.pi/180)

@@ -49,7 +49,7 @@ def loadparams(filename):
 
     return na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qubitname
 
-def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qubitname):
+def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qubitname):
     typename = "twotone"
     na.average_points = naverages
     na.averaging = 1
@@ -88,7 +88,7 @@ def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave
     mags = np.ndarray(len(qubitfreqs))
     phases = np.ndarray(len(qubitfreqs))
 
-    mags[:] = -50
+    mags[:] = -5
     phases[:] = 0
 
     fig = plt.figure()
@@ -96,16 +96,19 @@ def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave
 
     line, = ax.plot(qubitfreqs,mags)
 
-    Voltsource.ramp_voltage(0)
-    sleep(0.05)
-    Voltsource.turn_on()
-    sleep(0.05)
+    if voltageSourceState:
+        Voltsource.ramp_voltage(0)
+        sleep(0.05)
+        Voltsource.turn_on()
+        sleep(0.05)
+        Voltsource.ramp_voltage(voltage)
+    
     RFsource.start_rf()
     sleep(0.05)
     na.power = 1
     sleep(0.05)
 
-    Voltsource.ramp_voltage(voltage)
+    
 
     try:
         for idx,qfreq in enumerate(qubitfreqs):
@@ -120,13 +123,14 @@ def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave
             phases[idx] =  data[1::2][1]
 
 
-            line.set_ydata(mags)
-            ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
+            plt.plot(qubitfreqs,mags)
+            #line.set_ydata(mags)
+            #ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
         
             plt.pause(0.05)
 
-            fig.canvas.draw()
-            fig.canvas.flush_events()
+            #fig.canvas.draw()
+            #fig.canvas.flush_events()
             
 
         na.power = 0
@@ -134,8 +138,9 @@ def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave
         RFsource.stop_rf()
         sleep(0.05)
 
-        Voltsource.ramp_voltage(0)
-        Voltsource.turn_off()
+        if voltageSourceState:
+            Voltsource.ramp_voltage(0)
+            Voltsource.turn_off()
 
 
         Z = 10**(mags/20)*np.exp(1j*phases*np.pi/180)

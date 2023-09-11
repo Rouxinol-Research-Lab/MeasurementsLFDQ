@@ -81,7 +81,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
 
     dg.setDelay(3,2,pulseExcitationLength) # B in relation to A
-    dg.setDelay(4,2,delayBetweenPulses) # C in relation to A
+    dg.setDelay(4,3,delayBetweenPulses) # C in relation to B
     dg.setDelay(5,4,pulseMeasurementLength) # D in relation to C
     
     
@@ -210,7 +210,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    type = data['type']
+    #type = data['type']
     freqs = data['freqs']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))

@@ -68,7 +68,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
        
     '''
     
-    typename = "twotone_pulse"
+    typename = "rabi"
 
     samplingRate = 1e9/decimation_value
 
@@ -154,7 +154,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     RFsourceMeasurement.start_rf()
 
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
-    RFsourceMeasurement.set_frequency(freqExcitation)
+    RFsourceExcitation.set_frequency(freqExcitation)
     RFsourceExcitation.start_rf()
     awg.start()
     sleep(0.05)
@@ -167,7 +167,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
             dg.setDelay(3,2,duration) # B in relation to A
 
-            sleep(0.05)
+            sleep(1)
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
             Is[idx] = I
             Qs[idx] = Q 
@@ -196,7 +196,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
         Z = Is+Qs*1j
 
-        np.savez(name,header=howtoplot,freqs=qubitfreqs,Z=Z)
+        np.savez(name,header=howtoplot,duration=timeDurationExcitations,Z=Z)
         clear_output(wait=True)
         plt.pause(0.05)
         plt.show()
@@ -212,15 +212,15 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    type = data['type']
-    freqs = data['freqs']
+    #type = data['type']
+    duration = data['duration']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.plot(freqs*1e-6,20*np.log10(mag))
+    plt.plot(duration*1e9,20*np.log10(mag))
     ax.tick_params(labelsize=20)
-    ax.set_xlabel('Frequency (MHz)',fontsize=20)
+    ax.set_xlabel('Pulse Duration (ns)',fontsize=20)
     #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()

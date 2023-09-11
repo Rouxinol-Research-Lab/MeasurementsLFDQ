@@ -59,8 +59,9 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState,
     na.averaging = 1
     na.power = 0
 
-    Voltsource.ramp_voltage(0)
-    Voltsource.turn_off()
+    if voltageSourceState:
+        Voltsource.ramp_voltage(0)
+        Voltsource.turn_off()
 
     na.center_frequency = center_freq
     na.span_frequency = span_freq
@@ -154,8 +155,9 @@ def plot(filename):
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
     plt.pcolor(attenuations,freqs*1e-6,20*np.log10(mags.T))
-    cbar=plt.colorbar(label='S21 (dB)')
+    cbar=plt.colorbar()
     cbar.ax.tick_params(labelsize=20)
+    cbar.ax.set_ylabel('S21 (dB)',fontsize=20)
     ax.tick_params(labelsize=20)
     ax.set_xlabel('Attenuation (dB)',fontsize=20)
     ax.set_ylabel('Frequency (MHz)',fontsize=20)

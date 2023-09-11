@@ -46,19 +46,22 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseLength,ampReference,decimation_value):
+def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,ampReference,decimation_value):
     typename = "sweep_pulse"
 
     samplingRate = 1e9/decimation_value
 
-    dg.setLevelAmplitude(1,3) # Set AB to 3 Volts
+    dg.setLevelAmplitude(2,3) # Set CD to 3 Volts
     dg.setTriggerSource(5) # Set trigger to be controlled by me
     dg.setBurstCount(int(nBuffer*recordPerBuffers)) # set number of shots
     dg.setBurstPeriod(pulsesPeriod) # set period between shots
     dg.setBurstMode(1)
-    dg.setDelay(3,2,pulseLength)
 
-    pointsPerRecord = int(pulseLength*samplingRate/256)*256
+    dg.setDelay(3,2,0) # B in relation to A
+    dg.setDelay(4,2,0) # C in relation to A
+    dg.setDelay(5,4,pulseMeasurementLength) # D in relation to C
+
+    pointsPerRecord = int(pulseMeasurementLength*samplingRate/256)*256
 
     RFsource.stop_rf()
     RFsource.start_pulse()
@@ -173,7 +176,7 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    type = data['type']
+    #type = data['type']
     freqs = data['freqs']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
