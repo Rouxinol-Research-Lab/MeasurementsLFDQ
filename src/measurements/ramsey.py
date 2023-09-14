@@ -51,7 +51,7 @@ def loadparams(filename):
 def convertToSamples(awgRate,length):
     return  int(awgRate*length/256)*256
 
-def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value):
+def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value, roundDelayArray = 6, timeToWaitForAWGUpload = 5, saveData = True):
     
     typename = "ramsey"
 
@@ -76,7 +76,7 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
     Voltsource.ramp_voltage(0)
     Voltsource.turn_off()
 
-    delays = np.arange(delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,)
+    delays = np.round(np.arange(delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,),roundDelayArray)
 
     Is = np.ndarray(len(delays))
     Qs = np.ndarray(len(delays))
@@ -149,15 +149,17 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
 
         for idx, delayBetweenPulses in enumerate(delays):
             clear_output(wait=True)
-
+            
             awg.stop()
             sleep(0.05)
 
             sampleSizeMeasurement = convertToSamples(awgRate,pulsesPeriod+delayBetweenPulses+2*durationExcitation)
             sampleSizeDelay = convertToSamples(awgRate,delayBetweenPulses)
 
+
             awg.clearMemory()
             awg.defineSegment(sampleSizeMeasurement)
+
             sleep(0.05)
 
             awg.start()
@@ -165,15 +167,17 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
             sleep(0.05)
 
             awg.setWave(freq,1, sampleSizeDelay+2*sampleSizeExcitation, sampleSizeMeasurementPulse,awgRate)
-            sleep(5)
+            sleep(timeToWaitForAWGUpload)
 
             awg.setMarker(0,2)
             awg.setMarker(sampleSizeExcitation,0)
             awg.setMarker(sampleSizeDelay+sampleSizeExcitation,2)
             awg.setMarker(sampleSizeDelay+2*sampleSizeExcitation+sampleSizeMeasurementPulse,0)
+
             sleep(0.05)
 
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
+
             Is[idx] = I
             Qs[idx] = Q 
             
@@ -183,9 +187,10 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
             plt.pause(0.05)
             plt.plot(delays*1e6,mags)
 
-            Z = Is+Qs*1j
+            if saveData:
+                Z = Is+Qs*1j
 
-            np.savez(name,header=howtoplot,delay=delays,Z=Z)
+                np.savez(name,header=howtoplot,delay=delays,Z=Z)
 
             # line.set_ydata(mags)
             # ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
