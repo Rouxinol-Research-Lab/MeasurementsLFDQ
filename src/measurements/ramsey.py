@@ -136,8 +136,17 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
     RFsourceExcitation.set_frequency(freqExcitation)
     RFsourceExcitation.start_rf()
 
+    awg.setSingleWithMarker()
 
+    awg.setVoltage(1,1)
+    awg.setVoltage(3,1)
+    awg.setVoltage(4,1)
+    awg.setVoltageOffset(3,0.5)
+    awg.setVoltageOffset(4,0.5)
 
+    awg.toggleChannelOuput(1)
+    awg.toggleChannelOuput(3)
+    awg.toggleChannelOuput(4)
 
 
     try:
@@ -187,6 +196,9 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
             # fig.canvas.draw()
             # fig.canvas.flush_events()
 
+        awg.toggleChannelOuput(1)
+        awg.toggleChannelOuput(3)
+        awg.toggleChannelOuput(4)
 
         
         RFsourceExcitation.stop_rf()        

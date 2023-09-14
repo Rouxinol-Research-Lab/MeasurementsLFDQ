@@ -349,3 +349,11 @@ class M8195A_driver():
     def getVoltageOffset(self, channel):
         result = SCPI_sock_query(self._session, ':VOLT{}:OFFS?'.format(channel))
         print(result)
+
+    def setSingleWithMarker(self):
+        SCPI_sock_send(self._session, ':INST:DACM MARK')
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def setSingle(self):
+        SCPI_sock_send(self._session, ':INST:DACM SING')
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
