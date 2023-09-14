@@ -7,10 +7,10 @@ class E8257D_driver(VisaInstrument):
         self.stop_mod()
 
     def setPulsePolarityNormal(self):
-        self.write(':PULM:EXT:POL:NORM')
+        self.write(':PULM:EXT:POL NORM')
                    
     def setPulsePolarityInverted(self):
-        self.write(':PULM:EXT:POL:INV')
+        self.write(':PULM:EXT:POL INV')
 
     def start_rf(self):
         self.write(":OUTPUT ON")
