@@ -100,13 +100,57 @@ class M8195A_driver():
         print(SCPI_sock_query(self._session,":TRAC1:CAT?"))
         print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
 
-    def setCWFrequency(self,freq):
+    def setMarker(self,index,marker_value):
+        '''
+            marker_value:
+            0 -> Both markers to low
+            1 -> Marker 1 to high
+            2 -> Marker 2 to high
+            3 -> Both marker to high
+
+            index:
+            the starting index to set the marker
+        '''
+        a = np.zeros(256)
+        
+        
+        # converte para os dados especificados
+        marker1 = np.zeros(len(a),dtype=int)
+        marker1[:] = marker_value
+        
+        withmarker = np.array(tuple(zip(a,marker1))).flatten()
+
+        data_arrstr = np.char.mod('%d', withmarker)
+        #combine to a string
+        data_str = ",".join(data_arrstr)
+        
+        SCPI_sock_send(self._session, ':TRAC1:DATA 1,{},{}'.format(index,data_str))
+
+    def setWave(self,freq,marker_value, index, size,awgRate):
+
+        x = np.arange(0,size*1/awgRate,1/awgRate)
+        awgOsc = np.array((2**7-1)*np.sin(2*np.pi*(freq)*x),dtype=np.int8)
+
+        # converte para os dados especificados
+        marker1 = np.zeros(len(awgOsc),dtype=int)
+        marker1[:] = marker_value
+
+        withmarker = np.array(tuple(zip(awgOsc,marker1))).flatten()
+
+        data_arrstr = np.char.mod('%d', withmarker)
+        #combine to a string
+        data_str = ",".join(data_arrstr)
+
+        SCPI_sock_send(self._session, ':TRAC1:DATA 1,{},{}'.format(index,data_str))
+
+
+    def setCWFrequency(self,freq,channel=1):
         self.stop()
 
         _,awgRate,npoints = findAwgRateAndPeriod(freq)
 
-        SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
-        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(npoints) +",0")
+        SCPI_sock_send(self._session,":TRAC:DEL {}".format(channel))
+        SCPI_sock_send(self._session,":TRAC{}:DEF 1,".format(channel)+ str(npoints) +",0")
 
         self.set_sampleRate(awgRate)
 
@@ -114,9 +158,11 @@ class M8195A_driver():
         awgOsc = np.array((2**7-1)*np.sin(2*np.pi*(freq)*x),dtype=np.int8)
 
         # converte para os dados especificados
-        data_str = convertToStr(awgOsc)
+        data_arrstr = np.char.mod('%d', awgOsc)
+        #combine to a string
+        data_str = ",".join(data_arrstr)
         # envia os dados para awg
-        SCPI_sock_send(self._session, ':TRAC1:DATA 1,0,{}'.format(data_str))
+        SCPI_sock_send(self._session, ':TRAC{}:DATA 1,0,{}'.format(channel,data_str))
 
 
     def sendData(self,channel, x_str,delay, numberOfChannels):
@@ -258,7 +304,7 @@ class M8195A_driver():
 
 
 
-    def set_sampleRate(self,freq):
+    def set_sampleRate(self,freq,nChannel=1):
         '''
             Set or query the sample frequency of the output DAC.
         '''
@@ -270,10 +316,10 @@ class M8195A_driver():
             else:
                 raise ValueError("Invalid value. Function accepts only 'min', 'max', float or int.")
         elif type(freq) == float:
-            if not (freq >= 53.76e9 and freq <= 65e9):
+            if not (freq >= 53.76e9/nChannel and freq <= 65e9/nChannel):
                 raise ValueError("Invalid value. Value not within correct range: between 53.76 GSa/s and 65 GSa/s")
         elif type(freq) == int:
-            if not (freq >= int(53.76e9) and freq <= int(65e9)):
+            if not (freq >= int(53.76e9/nChannel) and freq <= int(65e9/nChannel)):
                 raise ValueError("Invalid value. Value not within correct range: between 53.76 GSa/s and 65 GSa/s")
         else:
             raise TypeError("Invalid type. Function accepts only str, float or int.")
@@ -285,3 +331,21 @@ class M8195A_driver():
         data = SCPI_sock_query(self._session,':TRAC1:DATA? 1, 0,{}'.format(size))
         return np.array(data.split(',')).astype(int)
 
+
+    def setVoltage(self, channel, volt):
+        SCPI_sock_send(self._session, ':VOLT{} {}'.format(channel, volt))
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+    
+
+    def getVoltage(self, channel):
+        result = SCPI_sock_query(self._session, ':VOLT{}?'.format(channel))
+        print(result)
+
+
+    def setVoltageOffset(self, channel, volt):
+        SCPI_sock_send(self._session, ':VOLT{}:OFFS {}'.format(channel, volt))
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def getVoltageOffset(self, channel):
+        result = SCPI_sock_query(self._session, ':VOLT{}:OFFS?'.format(channel))
+        print(result)
