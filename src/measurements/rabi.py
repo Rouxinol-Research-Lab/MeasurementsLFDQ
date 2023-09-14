@@ -76,7 +76,6 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     dg.setLevelAmplitude(2,3) # Set CD to 3 Volts
     dg.setTriggerSource(5) # Set trigger to be controlled by me
     dg.setBurstCount(int(nBuffer*recordPerBuffers)) # set number of shots
-    dg.setBurstPeriod(pulsesPeriod) # set period between shots
     dg.setBurstMode(1)  
 
 
@@ -112,8 +111,8 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     Is = np.ndarray(len(timeDurationExcitations))
     Qs = np.ndarray(len(timeDurationExcitations))
 
-    Is[:] = 1
-    Qs[:] = 1
+    Is[:] = 10**(-45/20)
+    Qs[:] = 10**(-45/20)
 
 
 
@@ -167,7 +166,9 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
             dg.setDelay(3,2,duration) # B in relation to A
 
-            sleep(1)
+            dg.setBurstPeriod(pulsesPeriod+duration) # set period between shots
+
+            sleep(0.05)
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
             Is[idx] = I
             Qs[idx] = Q 
