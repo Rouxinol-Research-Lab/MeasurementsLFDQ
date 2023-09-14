@@ -112,8 +112,8 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     Is = np.ndarray(len(qubitfreqs))
     Qs = np.ndarray(len(qubitfreqs))
 
-    Is[:] = 1
-    Qs[:] = 1
+    Is[:] = 10**(-45/20)
+    Qs[:] = 10**(-45/20)
 
 
 
