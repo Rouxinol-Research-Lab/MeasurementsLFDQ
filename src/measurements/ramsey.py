@@ -144,10 +144,6 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
     awg.setVoltageOffset(3,0.5)
     awg.setVoltageOffset(4,0.5)
 
-    awg.toggleChannelOuput(1)
-    awg.toggleChannelOuput(3)
-    awg.toggleChannelOuput(4)
-
 
     try:
 
@@ -160,7 +156,8 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
             sampleSizeMeasurement = convertToSamples(awgRate,pulsesPeriod+delayBetweenPulses+2*durationExcitation)
             sampleSizeDelay = convertToSamples(awgRate,delayBetweenPulses)
 
-            awg.allocMemory(sampleSizeMeasurement)
+            awg.clearMemory()
+            awg.defineSegment(sampleSizeMeasurement)
             sleep(0.05)
 
             awg.start()
@@ -196,9 +193,6 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
             # fig.canvas.draw()
             # fig.canvas.flush_events()
 
-        awg.toggleChannelOuput(1)
-        awg.toggleChannelOuput(3)
-        awg.toggleChannelOuput(4)
 
         
         RFsourceExcitation.stop_rf()        
