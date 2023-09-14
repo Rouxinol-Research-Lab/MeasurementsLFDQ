@@ -71,14 +71,18 @@ class M8195A_driver():
 
     def start(self):
         SCPI_sock_send(self._session,":INIT:IMM")    
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
         
     def stop(self):
         SCPI_sock_send(self._session,":ABOR")
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
     def close(self):
         SCPI_sock_close(self._session)
+
+    def clearMemory(self):
+        SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
+
+    def defineSegment(self, nbytes):
+        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(nbytes) +",0")
 
     def allocMemory(self,nbytes):
         if not isinstance(nbytes,int):
