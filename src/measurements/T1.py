@@ -46,7 +46,7 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value):
+def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState, excitationState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -68,7 +68,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
        
     '''
     
-    typename = "twotone_pulse"
+    typename = "T1"
 
     samplingRate = 1e9/decimation_value
 
@@ -111,8 +111,8 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     Is = np.ndarray(len(delays))
     Qs = np.ndarray(len(delays))
 
-    Is[:] = 1
-    Qs[:] = 1
+    Is[:] = 10**(-45/20)
+    Qs[:] = 10**(-45/20)
 
 
 
@@ -153,11 +153,16 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     RFsourceMeasurement.start_rf()
 
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
-    RFsourceMeasurement.set_frequency(freqExcitation)
-    RFsourceExcitation.start_rf()
+    RFsourceExcitation.set_frequency(freqExcitation)
+    if excitationState:
+        RFsourceExcitation.start_rf()
+        
     awg.start()
     sleep(0.05)
 
+    dg.setBurstPeriod(pulsesPeriod+delays[0]) # set period between shots
+    dg.setDelay(4,3,delays[0]) # C in relation to B
+    I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
 
     try:
 
@@ -176,7 +181,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
             
             plt.pause(0.05)
-            plt.plot(delays,mags)
+            plt.plot(delays*1e6,mags)
 
             # line.set_ydata(mags)
             # ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
@@ -196,7 +201,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
         Z = Is+Qs*1j
 
-        np.savez(name,header=howtoplot,freqs=qubitfreqs,Z=Z)
+        np.savez(name,header=howtoplot,delay=delays,Z=Z)
         clear_output(wait=True)
         plt.pause(0.05)
         plt.show()
@@ -212,15 +217,15 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    type = data['type']
-    freqs = data['freqs']
+    #type = data['type']
+    delay = data['delay']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.plot(freqs*1e-6,20*np.log10(mag))
+    plt.plot(delay*1e6,20*np.log10(mag))
     ax.tick_params(labelsize=20)
-    ax.set_xlabel('Frequency (MHz)',fontsize=20)
+    ax.set_xlabel('Delay (µs)',fontsize=20)
     #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
