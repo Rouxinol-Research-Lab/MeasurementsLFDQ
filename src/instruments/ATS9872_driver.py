@@ -23,11 +23,11 @@ class ATS9872_driver():
     #     errorMessage,
     #     &returnI, &returnQ);
 
-        self.AlazarMeasurerdll.alazarCapture.argtypes = ct.c_int, ct.c_int, ct.c_int, ct.c_int, ct.c_double,ct.c_double, ct.c_int, ct.c_int,ct.c_int,ct.c_int, ct.c_bool, ct.POINTER(ct.c_char), ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)
+        self.AlazarMeasurerdll.alazarCapture.argtypes = ct.c_int, ct.c_int, ct.c_int, ct.c_int, ct.c_double,ct.c_double, ct.c_int, ct.c_int,ct.c_int,ct.c_int, ct.c_bool, ct.POINTER(ct.c_char), ct.c_bool, ct.POINTER(ct.c_double), ct.POINTER(ct.c_double)
 
         self.AlazarMeasurerdll.alazarCapture.restype  = ct.c_int
 
-    def capture(self,preTriggerSamples, postTriggerSamples, recordsPerBuffer, buffersPerAcquisition, powerReference_dBm, inputLoad = 50, triggerLevel_volts = 0.5, triggerRange_volts = 3.0, waveformHeadCut = 100, period = 14, buffer_timeout_ms = 5000, decimation_value = 1, save = False):
+    def capture(self,preTriggerSamples, postTriggerSamples, recordsPerBuffer, buffersPerAcquisition, powerReference_dBm, inputLoad = 50, triggerLevel_volts = 0.5, triggerRange_volts = 3.0, waveformHeadCut = 100, period = 14, buffer_timeout_ms = 5000, decimation_value = 1, TTL = False, save = False):
         
         
         preTrigS = ct.c_int(preTriggerSamples)
@@ -41,6 +41,7 @@ class ATS9872_driver():
         per = ct.c_int(period)
         timeout_ms = ct.c_int(buffer_timeout_ms)
         decimation_value =  ct.c_int(decimation_value)
+        setTTL = ct.c_bool(TTL)
         saveData = ct.c_bool(save)
         errorMessage = ct.create_string_buffer(80)
 
@@ -64,6 +65,7 @@ class ATS9872_driver():
                                         decimation_value,
                                         saveData,
                                         errorMessage,
+                                        setTTL,
                                         ct.byref(I),
                                         ct.byref(Q))
         
