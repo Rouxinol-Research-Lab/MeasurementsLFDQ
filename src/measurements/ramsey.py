@@ -51,7 +51,34 @@ def loadparams(filename):
 def convertToSamples(awgRate,length):
     return  int(awgRate*length/512)*512
 
-def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value, roundDelayArray = 6, timeToWaitForAWGUpload = 5, saveData = True):
+def measure(alazar,
+            awg,att,
+            RFsourceMeasurement,
+            RFsourceExcitation,
+            Voltsource,
+            freqMeasurement,
+            freqExcitation,
+            durationExcitation,
+            voltage,
+            rf_excitation_amp,
+            rf_measurement_amp,
+            attenuator_att,
+            if_freq,
+            qubitname,
+            voltageSourceState,
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            delayBetweenPulses_init,
+            delayBetweenPulses_final,
+            delayBetweenPulses_step,
+            ampReference,
+            decimation_value,
+            roundDelayArray = 6,
+            timeToWaitForAWGUpload = 5,
+            saveData = True):
     
     typename = "ramsey"
 
@@ -90,15 +117,38 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
 
 
     howtoplot = "\
+    #freqMeasurement: " + str(freqMeasurement) + "\n\
+    #freqExcitation: " + str(freqExcitation) + "\n\
+    #durationExcitation: " + str(durationExcitation) + "\n\
+    #voltage: " + str(voltage) + "\n\
+    #rf_excitation_amp: " + str(rf_excitation_amp) + "\n\
+    #rf_measurement_amp: " + str(rf_measurement_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qubitname: " + str(qubitname) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #nBuffer: " + str(nBuffer) + "\n\
+    #recordPerBuffers: " + str(recordPerBuffers) + "\n\
+    #waveformHeadCut: " + str(waveformHeadCut) + "\n\
+    #pulsesPeriod: " + str(pulsesPeriod) + "\n\
+    #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
+    #delayBetweenPulses_init: " + str(delayBetweenPulses_init) + "\n\
+    #delayBetweenPulses_final: " + str(delayBetweenPulses_final) + "\n\
+    #delayBetweenPulses_step: " + str(delayBetweenPulses_step) + "\n\
+    #ampReference: " + str(ampReference) + "\n\
+    #decimation_value: " + str(decimation_value) + "\n\
+    #roundDelayArray: " + str(roundDelayArray) + "\n\
+    #timeToWaitForAWGUpload : " + str(timeToWaitForAWGUpload) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
-    freqs = data['freqs']\n\
+    delays = data['delays']\n\
     mag = np.abs(data['Z'])\n\
     phase = np.unwrap(np.angle(data['Z']))\n\
     fig = plt.figure(figsize=(10,7))\n\
     ax = fig.gca()\n\
-    plt.plot(freqs*1e-6,20*np.log10(mag))\n\
+    plt.plot(delays*1e6,20*np.log10(mag))\n\
     ax.tick_params(labelsize=20)\n\
-    ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
+    ax.set_xlabel('Delay (us)',fontsize=20)\n\
     ax.set_ylabel('S21 (dB)',fontsize=20)\n\
     ax.set_title('"+name+"',fontsize=16)\n\
     plt.show()"
@@ -190,7 +240,7 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
             if saveData:
                 Z = Is+Qs*1j
 
-                np.savez(name,header=howtoplot,delay=delays,Z=Z)
+                np.savez(name,header=howtoplot,delays=delays,Z=Z)
 
             # line.set_ydata(mags)
             # ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
@@ -226,16 +276,15 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    #type = data['type']
-    delay = data['delay']
+    delays = data['delays']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.plot(delay*1e6,20*np.log10(mag))
+    plt.plot(delays*1e6,20*np.log10(mag))
     ax.tick_params(labelsize=20)
     ax.set_xlabel('Delay (µs)',fontsize=20)
-    #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
+    ax.set_ylabel('S21 (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
 
