@@ -46,7 +46,33 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, qubit_freq_init,qubit_freq_final,qubit_freq_step, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses,pulseExcitationLength,ampReference,decimation_value):
+def measure(alazar,
+            awg,
+            dg,
+            att,
+            RFsourceMeasurement,
+            RFsourceExcitation,
+            Voltsource,
+            freqMeasurement,
+            voltage,
+            rf_excitation_amp,
+            rf_measurement_amp,
+            attenuator_att,
+            qubit_freq_init,
+            qubit_freq_final,
+            qubit_freq_step,
+            if_freq,
+            qubitname,
+            voltageSourceState,
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            delayBetweenPulses,
+            pulseExcitationLength,
+            ampReference,
+            decimation_value):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -121,6 +147,27 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
 
     howtoplot = "\
+    #freqMeasurement: " + str(freqMeasurement) + "\n\
+    #voltage: " + str(voltage) + "\n\
+    #rf_excitation_amp: " + str(rf_excitation_amp) + "\n\
+    #rf_measurement_amp: " + str(rf_measurement_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #qubit_freq_init: " + str(qubit_freq_init) + "\n\
+    #qubit_freq_final: " + str(qubit_freq_final) + "\n\
+    #qubit_freq_step: " + str(qubit_freq_step) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qubitname: " + qubitname + "\n\
+    #nBuffer: " + str(nBuffer) + "\n\
+    #recordPerBuffers: " + str(recordPerBuffers) + "\n\
+    #waveformHeadCut: " + str(waveformHeadCut) + "\n\
+    #pulsesPeriod: " + str(pulsesPeriod) + "\n\
+    #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
+    #delayBetweenPulses: " + str(delayBetweenPulses) + "\n\
+    #pulseExcitationLength: " + str(pulseExcitationLength) + "\n\
+    #ampReference: " + str(ampReference) + "\n\
+    #decimation_value:" + str(decimation_value) + "\n\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mag = np.abs(data['Z'])\n\

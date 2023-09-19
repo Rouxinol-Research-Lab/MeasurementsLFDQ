@@ -46,7 +46,28 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,ampReference,decimation_value):
+def measure(alazar,
+            awg,
+            dg,
+            att,
+            RFsource,
+            Voltsource,
+            voltage,
+            rf_amp,
+            attenuator_att,
+            center_freq,
+            span_freq,
+            step_freq,
+            if_freq,
+            qubitname,
+            voltageSourceState,
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            ampReference,
+            decimation_value):
     typename = "sweep_pulse"
 
     samplingRate = 1e9/decimation_value
@@ -91,6 +112,23 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att
 
 
     howtoplot = "\
+    #voltage: " + str(voltage) + "\n\
+    #rf_amp: " + str(rf_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #step_freq: " + str(step_freq) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qubitname: " + qubitname + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #nBuffer: " + str(nBuffer) + "\n\
+    #recordPerBuffers: " + str(recordPerBuffers) + "\n\
+    #waveformHeadCut: " + str(waveformHeadCut) + "\n\
+    #pulsesPeriod: " + str(pulsesPeriod) + "\n\
+    #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
+    #ampReference: " + str(ampReference) + "\n\
+    #decimation_value:" + str(decimation_value) + "\n\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mag = np.abs(data['Z'])\n\

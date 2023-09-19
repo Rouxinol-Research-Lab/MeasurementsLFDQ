@@ -46,7 +46,29 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage_init,voltage_final,voltage_step,rf_amp,attenuator_att, center_freq,span_freq,step_freq, if_freq, qubitname,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseLength,ampReference,decimation_value):
+def measure(alazar,
+            awg,
+            dg,
+            att,
+            RFsource,
+            Voltsource,
+            voltage_init,
+            voltage_final,
+            voltage_step,
+            rf_amp,
+            attenuator_att,
+            center_freq,
+            span_freq,
+            step_freq,
+            if_freq,
+            qubitname, 
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseLength,
+            ampReference,
+            decimation_value):
     typename = "fluxsweep_pulse"
 
     samplingRate = 1e9/decimation_value
@@ -90,6 +112,24 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage_init,voltage_final,vo
 
 
     howtoplot = "\
+    #voltage_init: " + str(voltage_init) + "\n\
+    #voltage_final: " + str(voltage_final) + "\n\
+    #voltage_step: " + str(voltage_step) + "\n\
+    #rf_amp: " + str(rf_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #step_freq: " + str(step_freq) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qubitname: " + qubitname + "\n\
+    #nBuffer: " + str(nBuffer) + "\n\
+    #recordPerBuffers: " + str(recordPerBuffers) + "\n\
+    #waveformHeadCut: " + str(waveformHeadCut) + "\n\
+    #pulsesPeriod: " + str(pulsesPeriod) + "\n\
+    #pulseMeasurementLength: " + str(pulseLength) + "\n\
+    #ampReference: " + str(ampReference) + "\n\
+    #decimation_value:" + str(decimation_value) + "\n\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mags = np.abs(data['Z'])\n\
@@ -150,7 +190,7 @@ def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage_init,voltage_final,vo
 
         Z = Is+Qs*1j
 
-        np.savez(name,header=howtoplot,freqs=freqs,Z=Z,attenuations=voltages)
+        np.savez(name,header=howtoplot,freqs=freqs,Z=Z,voltages=voltages)
         clear_output(wait=True)
         plt.pause(0.05)
         plt.show()

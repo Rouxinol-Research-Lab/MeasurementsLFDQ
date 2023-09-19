@@ -46,7 +46,8 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att_init,attenuator_att_final,attenuator_att_step, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,ampReference,decimation_value):
+def measure(alazar,
+awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att_init,attenuator_att_final,attenuator_att_step, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,ampReference,decimation_value):
     typename = "powersweep_pulse"
 
     samplingRate = 1e9/decimation_value
