@@ -296,7 +296,7 @@ def plot(filename):
     ax.set_title(filename,fontsize=16)
     plt.show()
 
-def T1(time, Const, Slope, T):   
+def T1_func(time, Const, Slope, T):   
     """
     Rabi curve using exponential decay: Const + Slope*exp(-time/Tr)*cos(2*pi*time/Period+Phase)
 
