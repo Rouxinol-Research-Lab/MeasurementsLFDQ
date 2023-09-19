@@ -314,15 +314,15 @@ def calculate_T1(filename, expectedT1 =10e-6):
     
 
 
-    
+    const = (mag[0][1]-mag[0][0])/2
+    slope = mag[0][1] - mag[0][0]
     
     
     T1s = np.zeros(len(durationExcitations))
     T1s_error = np.zeros(len(durationExcitations))
     
     for idx,_ in enumerate(durationExcitations):
-        const = (mag[idx][1]-mag[idx][0])/2
-        slope = mag[idx][1] - mag[idx][0]
+
         
         args = [const,slope,expectedT1]
         popt, pcov  = curve_fit(T1_func, delays, mag[idx], p0=args)
