@@ -98,7 +98,7 @@ def measure(alazar,
        
     '''
     
-    typename = "T1"
+    typename = "T1_map"
 
     samplingRate = 1e9/decimation_value
 
