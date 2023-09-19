@@ -76,6 +76,7 @@ def measure(alazar,
             delayBetweenPulses_step,
             ampReference,
             decimation_value,
+            currentResistance,
             roundDelayArray = 6,
             timeToWaitForAWGUpload = 5,
             saveData = True):
@@ -139,6 +140,7 @@ def measure(alazar,
     #decimation_value: " + str(decimation_value) + "\n\
     #roundDelayArray: " + str(roundDelayArray) + "\n\
     #timeToWaitForAWGUpload : " + str(timeToWaitForAWGUpload) + "\n\
+    #currentResistance: " + str(currentResistance)+ "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     delays = data['delays']\n\
