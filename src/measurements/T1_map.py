@@ -150,6 +150,30 @@ def measure(alazar,
 
 
     howtoplot = "\
+    #freqMeasurement:" + str(freqMeasurement)+ "\n\
+    #freqExcitation:" + str(freqExcitation)+ "\n\
+    #durationExcitation_init:" + str(durationExcitation_init)+ "\n\
+    #durationExcitation_final:" + str(durationExcitation_final)+ "\n\
+    #durationExcitation_step:" + str(durationExcitation_step)+ "\n\
+    #voltage:" + str(voltage)+ "\n\
+    #rf_excitation_amp:" + str(rf_excitation_amp)+ "\n\
+    #rf_measurement_amp:" + str(rf_measurement_amp)+ "\n\
+    #attenuator_att:" + str(attenuator_att)+ "\n\
+    #if_freq:" + str(if_freq)+ "\n\
+    #qubitname:" + str(qubitname)+ "\n\
+    #voltageSourceState:" + str(voltageSourceState)+ "\n\
+    #excitationState:" + str(excitationState)+ "\n\
+    #nBuffer:" + str(nBuffer)+ "\n\
+    #recordPerBuffers:" + str(recordPerBuffers)+ "\n\
+    #waveformHeadCut:" + str(waveformHeadCut)+ "\n\
+    #pulsesPeriod:" + str(pulsesPeriod)+ "\n\
+    #pulseMeasurementLength:" + str(pulseMeasurementLength)+ "\n\
+    #delayBetweenPulses_init:" + str(delayBetweenPulses_init)+ "\n\
+    #delayBetweenPulses_final:" + str(delayBetweenPulses_final)+ "\n\
+    #delayBetweenPulses_step:" + str(delayBetweenPulses_step)+ "\n\
+    #ampReference:" + str(ampReference)+ "\n\
+    #decimation_value:" + str(decimation_value)+ "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mag = np.abs(data['Z'])\n\
