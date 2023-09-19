@@ -41,18 +41,21 @@ def loadparams(filename):
 
 
 
-def measure(qubitname,Voltsource,voltage,voltageSourceState,
-                na,
-                att,
-                center_freq,
-                span_freq,
-                if_freq,
-                npoints,
-                naverages,
-                att_init,
-                att_final,
-                att_step,
-                ave_time):
+def measure(qubitname,
+            Voltsource,
+            voltage,
+            voltageSourceState,
+            na,
+            att,
+            center_freq,
+            span_freq,
+            if_freq,
+            npoints,
+            naverages,
+            att_init,
+            att_final,
+            att_step,
+            ave_time):
 
     typename = "powersweep"
     na.average_points = naverages
@@ -76,6 +79,17 @@ def measure(qubitname,Voltsource,voltage,voltageSourceState,
 
 
     howtoplot = "\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #npoints: " + str(npoints) + "\n\
+    #naverages: " + str(naverages) + "\n\
+    #att_init: " + str(att_init) + "\n\
+    #att_final: " + str(att_final) + "\n\
+    #att_step: " + str(att_step) + "\n\
+    #ave_time: " + str(ave_time) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     attenuations = data['atts']\n\
     freqs = data['freqs']\n\
