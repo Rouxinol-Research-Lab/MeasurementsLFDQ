@@ -46,7 +46,35 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,rabi_map_qfreq_init,rabi_map_qfreq_final, rabi_map_qfreq_step,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, pulseExcitationLength_init,pulseExcitationLength_final,pulseExcitationLength_step,  if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses,ampReference,decimation_value):
+def measure(alazar,
+            awg,
+            dg,
+            att,
+            RFsourceMeasurement,
+            RFsourceExcitation,
+            Voltsource,
+            freqMeasurement,
+            rabi_map_qfreq_init,
+            rabi_map_qfreq_final,
+            rabi_map_qfreq_step,
+            voltage,
+            rf_excitation_amp,
+            rf_measurement_amp,
+            attenuator_att,
+            pulseExcitationLength_init,
+            pulseExcitationLength_final,
+            pulseExcitationLength_step,
+            if_freq,
+            qubitname,
+            voltageSourceState,
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            delayBetweenPulses,
+            ampReference,
+            decimation_value):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -120,17 +148,44 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
 
     howtoplot = "\
-    data = np.load('"+name+".npz')\n\
-    freqs = data['freqs']\n\
+    #freqMeasurement: " + str(freqMeasurement)+ "\n\
+    #rabi_map_qfreq_init: " + str(rabi_map_qfreq_init)+ "\n\
+    #rabi_map_qfreq_final: " + str(rabi_map_qfreq_final)+ "\n\
+    #rabi_map_qfreq_step: " + str(rabi_map_qfreq_step)+ "\n\
+    #voltage: " + str(voltage)+ "\n\
+    #rf_excitation_amp: " + str(rf_excitation_amp)+ "\n\
+    #rf_measurement_amp: " + str(rf_measurement_amp)+ "\n\
+    #attenuator_att: " + str(attenuator_att)+ "\n\
+    #pulseExcitationLength_init: " + str(pulseExcitationLength_init)+ "\n\
+    #pulseExcitationLength_final: " + str(pulseExcitationLength_final)+ "\n\
+    #pulseExcitationLength_step: " + str(pulseExcitationLength_step)+ "\n\
+    #if_freq: " + str(if_freq)+ "\n\
+    #qubitname: " + str(qubitname)+ "\n\
+    #voltageSourceState,: " + str(voltageSourceState)+ "\n\
+    #nBuffer: " + str(nBuffer)+ "\n\
+    #recordPerBuffers: " + str(recordPerBuffers)+ "\n\
+    #waveformHeadCut: " + str(waveformHeadCut)+ "\n\
+    #pulsesPeriod: " + str(pulsesPeriod)+ "\n\
+    #pulseMeasurementLength: " + str(pulseMeasurementLength)+ "\n\
+    #delayBetweenPulses: " + str(delayBetweenPulses)+ "\n\
+    #ampReference: " + str(ampReference)+ "\n\
+    #decimation_value: " + str(decimation_value)+ "\n\
+    #HOW TO PLOT\n\
+    data = np.load(filename)\n\
+    duration = data['duration']\n\
+    qfreq = data['qubit_freqs']\n\
     mag = np.abs(data['Z'])\n\
     phase = np.unwrap(np.angle(data['Z']))\n\
     fig = plt.figure(figsize=(10,7))\n\
     ax = fig.gca()\n\
-    plt.plot(freqs*1e-6,20*np.log10(mag))\n\
+    plt.pcolor(qfreq*1e-6,duration*1e6,20*np.log10(mag.T))\n\
+    cbar=plt.colorbar()\n\
+    cbar.ax.tick_params(labelsize=20)\n\
+    cbar.ax.set_ylabel('S21 (dB)',fontsize=20)\n\
     ax.tick_params(labelsize=20)\n\
     ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
-    ax.set_ylabel('S21 (dB)',fontsize=20)\n\
-    ax.set_title('"+name+"',fontsize=16)\n\
+    ax.set_ylabel('duration (µs)',fontsize=20)\n\
+    ax.set_title(filename,fontsize=16)\n\
     plt.show()"
 
     att.set_attenuation(attenuator_att)
@@ -161,20 +216,23 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
     try:
 
-
-        for idx, duration in enumerate(timeDurationExcitations):
+        for idx_qfreq, qfreq in enumerate(qubit_freqs):
+        
+            RFsourceExcitation.set_frequency(qfreq)
+            sleep(0.05)
             
             Z = Is+Qs*1j
 
             np.savez(name,header=howtoplot,qubit_freqs=qubit_freqs,duration=timeDurationExcitations,Z=Z)
 
-            dg.setDelay(3,2,duration) # B in relation to A
-            dg.setBurstPeriod(pulsesPeriod+duration) # set period between shots
+
 
             sleep(0.05)
-            for idx_qfreq, qfreq in enumerate(qubit_freqs):
+            for idx, duration in enumerate(timeDurationExcitations):
                 clear_output(wait=True)
-                RFsourceExcitation.set_frequency(qfreq)
+
+                dg.setDelay(3,2,duration) # B in relation to A
+                dg.setBurstPeriod(pulsesPeriod+duration) # set period between shots
                 sleep(0.05)
 
                 I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
