@@ -170,7 +170,6 @@ def measure(alazar,
     fig = plt.figure()
     ax = fig.gca()
 
-    line, = ax.plot(delays,20*np.log10(np.sqrt(Is**2+Qs**2)))
 
 
     if voltageSourceState:
@@ -212,8 +211,8 @@ def measure(alazar,
 
                 sleep(0.05)
                 I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
-                Is[idx] = I
-                Qs[idx] = Q 
+                Is[idx_ext,idx] = I
+                Qs[idx_ext,idx] = Q 
             
                 mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
 
