@@ -47,7 +47,26 @@ def loadparams(filename):
 
     return na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, RFfrequency,qubitname,na_measurement,voltageSourceState,RFSourceState
 
-def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, RFfrequency,qubitname,na_measurement,voltageSourceState,RFSourceState):
+def measure(na,
+            att,
+            RFsource,
+            Voltsource,
+            voltage,
+            rf_amp,
+            attenuator_att,
+            na_amp,
+            ave_time,
+            center_freq,
+            span_freq,
+            naverages,
+            npoints,
+            if_freq,
+            RFfrequency,
+            qubitname,
+            na_measurement,
+            voltageSourceState,
+            RFSourceState,
+            currentResistance):
     typename = "vna"
     na.average_points = naverages
     na.averaging = 1
@@ -68,6 +87,23 @@ def measure(na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave
 
 
     howtoplot = "\
+    #voltage: " + str(voltage) + "\n\
+    #rf_amp: " + str(rf_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #na_amp: " + str(na_amp) + "\n\
+    #ave_time: " + str(ave_time) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #naverages: " + str(naverages) + "\n\
+    #npoints: " + str(npoints) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #RFfrequency: " + str(RFfrequency) + "\n\
+    #qubitname: " + str(qubitname) + "\n\
+    #na_measurement: " + str(na_measurement) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #RFSourceState: " + str(RFSourceState) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mag = np.abs(data['Z'])\n\
