@@ -46,7 +46,34 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState, excitationState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value):
+def measure(alazar,
+            awg,
+            dg,
+            att,
+            RFsourceMeasurement,
+            RFsourceExcitation,
+            Voltsource,
+            freqMeasurement,
+            freqExcitation,
+            durationExcitation,
+            voltage,
+            rf_excitation_amp,
+            rf_measurement_amp,
+            attenuator_att,
+            if_freq,
+            qubitname,
+            voltageSourceState,
+            excitationState,
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            delayBetweenPulses_init,
+            delayBetweenPulses_final,
+            delayBetweenPulses_step,
+            ampReference,
+            decimation_value):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -156,7 +183,7 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
     RFsourceExcitation.set_frequency(freqExcitation)
     if excitationState:
         RFsourceExcitation.start_rf()
-        
+
     awg.start()
     sleep(0.05)
 
