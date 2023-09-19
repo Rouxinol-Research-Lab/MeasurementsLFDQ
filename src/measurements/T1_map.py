@@ -285,7 +285,7 @@ def plot(filename):
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.pcolor(durationExcitations*1e6,delays*1e6,20*np.log10(mags.T))
+    plt.pcolor(durationExcitations*1e6,delays*1e6,20*np.log10(mag.T))
     cbar=plt.colorbar()
     cbar.ax.tick_params(labelsize=20)
     cbar.ax.set_ylabel('S21 (dB)',fontsize=20)
