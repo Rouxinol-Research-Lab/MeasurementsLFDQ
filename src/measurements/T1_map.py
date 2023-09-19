@@ -225,7 +225,7 @@ def measure(alazar,
             
             Z = Is+Qs*1j
 
-            np.savez(name,header=howtoplot,delay=delays,Z=Z)
+            np.savez(name,header=howtoplot,durationExcitations=durationExcitations,delays=delays,Z=Z)
             
             for idx, delayBetweenPulses in enumerate(delays):
                 clear_output(wait=True)
