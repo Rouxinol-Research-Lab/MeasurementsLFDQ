@@ -55,7 +55,8 @@ def measure(qubitname,
             att_init,
             att_final,
             att_step,
-            ave_time):
+            ave_time,
+            currentResistance):
 
     typename = "powersweep"
     na.average_points = naverages
@@ -89,6 +90,7 @@ def measure(qubitname,
     #att_final: " + str(att_final) + "\n\
     #att_step: " + str(att_step) + "\n\
     #ave_time: " + str(ave_time) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     attenuations = data['atts']\n\
