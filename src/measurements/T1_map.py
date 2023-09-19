@@ -1,3 +1,4 @@
+from site import addusersitepackages
 from instruments.ATS9872_driver import * # alazar
 from instruments.DG645_driver import * # delay generator
 from instruments.M8195A_driver import * # awg
@@ -12,7 +13,7 @@ from toml import load
 import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
-
+from scipy.optimize import curve_fit
 
 def loadparams(filename):
 
@@ -294,6 +295,41 @@ def plot(filename):
     ax.set_ylabel('Delay (µs)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
+
+def T1(time, Const, Slope, T):   
+    """
+    Rabi curve using exponential decay: Const + Slope*exp(-time/Tr)*cos(2*pi*time/Period+Phase)
+
+    """
+    return (Const + Slope*np.exp(-time/T))
+
+
+
+def calculate_T1(filename, expectedT1 =10e-6):
+    
+    data = np.load(filename)
+    delays = data['delays']
+    durationExcitations = data['durationExcitations']
+    mag = np.abs(data['Z'])
+    
+
+    const = (mag[1]-mag[0])/2
+    slope = mag[1] - mag[0]
+    
+    args = [const,slope,expectedT1]
+    
+    T1s = np.zeros(len(durationExcitations))
+    T1s_error = np.zeros(len(durationExcitations))
+    
+    for idx,_ in enumerate(durationExcitations):
+        popt, pcov  = curve_fit(mag[idx], delays, p0=args)
+        
+        T1s[idx] = popt
+        T1s_error[idx] = np.sqrt(np.diag(pcov))
+
+
+    return durationExcitations,T1s,T1s_error
+
 
 def main():
     args = sys.argv
