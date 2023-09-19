@@ -49,7 +49,7 @@ def loadparams(filename):
 
     
 def convertToSamples(awgRate,length):
-    return  int(awgRate*length/256)*256
+    return  int(awgRate*length/512)*512
 
 def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,durationExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,ampReference,decimation_value, roundDelayArray = 6, timeToWaitForAWGUpload = 5, saveData = True):
     
@@ -123,7 +123,7 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
     awg.set_sampleRate(awgRate)
 
     nPackets = pulseMeasurementLength/periodPerPacket*freq
-    sampleSizeMeasurementPulse = int(sampleSizePacket*nPackets/256)*256
+    sampleSizeMeasurementPulse = int(sampleSizePacket*nPackets/512)*512
 
     sampleSizeExcitation = convertToSamples(awgRate,durationExcitation)
 
@@ -149,7 +149,7 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
 
         for idx, delayBetweenPulses in enumerate(delays):
             clear_output(wait=True)
-            
+
             awg.stop()
             sleep(0.05)
 
