@@ -60,7 +60,29 @@ def loadparams(filename):
 
 
 
-def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_att,na_amp,average_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qamp_init,qamp_final,qamp_step,passive_qubit_att,qubitname):
+def measure(na,
+            att,
+            RFsource,
+            Voltsource,
+            voltage,
+            voltageSourceState,
+            attenuator_att,
+            na_amp,
+            average_time,
+            center_freq,
+            span_freq,
+            naverages,
+            npoints,
+            if_freq,
+            qfreq_init,
+            qfreq_final,
+            qfreq_step,
+            qamp_init,
+            qamp_final,
+            qamp_step,
+            passive_qubit_att,
+            qubitname,
+            currentResistance):
 
     typename = "powersweep_twotone"
     na.average_points = naverages
@@ -88,6 +110,26 @@ def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,attenuator_at
 
 
     howtoplot = "\
+    #voltage: " + str(voltage) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #na_amp: " + str(na_amp) + "\n\
+    #average_time: " + str(average_time) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #naverages: " + str(naverages) + "\n\
+    #npoints: " + str(npoints) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qfreq_init: " + str(qfreq_init) + "\n\
+    #qfreq_final: " + str(qfreq_final) + "\n\
+    #qfreq_step: " + str(qfreq_step) + "\n\
+    #qamp_init: " + str(qamp_init) + "\n\
+    #qamp_final: " + str(qamp_final) + "\n\
+    #qamp_step: " + str(qamp_step) + "\n\
+    #passive_qubit_att: " + str(passive_qubit_att) + "\n\
+    #qubitname: " + str(qubitname) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
+    #HOW TO PLOT \n\
     data = np.load('"+name+".npz')\n\
     qamps = data['qubit_amplitudes']\n\
     qfreqs = data['qubit_freqs']\n\
