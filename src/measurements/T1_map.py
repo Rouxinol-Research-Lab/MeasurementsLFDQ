@@ -322,7 +322,7 @@ def calculate_T1(filename, expectedT1 =10e-6):
     T1s_error = np.zeros(len(durationExcitations))
     
     for idx,_ in enumerate(durationExcitations):
-        popt, pcov  = curve_fit(mag[idx], delays, p0=args)
+        popt, pcov  = curve_fit(T1, delays, mag[idx], p0=args)
         
         T1s[idx] = popt
         T1s_error[idx] = np.sqrt(np.diag(pcov))
