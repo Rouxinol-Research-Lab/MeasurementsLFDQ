@@ -325,10 +325,10 @@ def calculate_T1(filename, expectedT1 =10e-6):
         slope = mag[idx][1] - mag[idx][0]
         
         args = [const,slope,expectedT1]
-        popt, pcov  = curve_fit(T1_func, delays, mag[idx], p0=args)
+        popt, pcov  = curve_fit(T1_func, delays, mag[idx], p0=args,maxfev=10000)
         
-        T1s[idx] = popt
-        T1s_error[idx] = np.sqrt(np.diag(pcov))
+        T1s[idx] = popt[2]
+        T1s_error[idx] = np.sqrt(np.diag(pcov))[2]
 
 
     return durationExcitations,T1s,T1s_error
