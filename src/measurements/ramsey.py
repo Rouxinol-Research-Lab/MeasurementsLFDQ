@@ -138,7 +138,7 @@ def measure(alazar,awg, att,RFsourceMeasurement,RFsourceExcitation,Voltsource,fr
 
     awg.setSingleWithMarker()
 
-    awg.setVoltage(1,1)
+    awg.setVoltage(1,0.5)
     awg.setVoltage(3,1)
     awg.setVoltage(4,1)
     awg.setVoltageOffset(3,0.5)
