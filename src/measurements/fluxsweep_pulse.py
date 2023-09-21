@@ -68,6 +68,7 @@ def measure(alazar,
             pulsesPeriod,
             pulseLength,
             ampReference,
+            currentResistance,
             decimation_value):
     typename = "fluxsweep_pulse"
 
@@ -128,6 +129,7 @@ def measure(alazar,
     #pulsesPeriod: " + str(pulsesPeriod) + "\n\
     #pulseMeasurementLength: " + str(pulseLength) + "\n\
     #ampReference: " + str(ampReference) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
     #decimation_value:" + str(decimation_value) + "\n\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\

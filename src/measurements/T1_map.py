@@ -76,7 +76,8 @@ def measure(alazar,
             delayBetweenPulses_final,
             delayBetweenPulses_step,
             ampReference,
-            decimation_value):
+            decimation_value,
+            currentResistance):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -98,7 +99,7 @@ def measure(alazar,
        
     '''
     
-    typename = "T1"
+    typename = "T1_map"
 
     samplingRate = 1e9/decimation_value
 
@@ -174,6 +175,7 @@ def measure(alazar,
     #delayBetweenPulses_step:" + str(delayBetweenPulses_step)+ "\n\
     #ampReference:" + str(ampReference)+ "\n\
     #decimation_value:" + str(decimation_value)+ "\n\
+    #currentResistance:" + str(currentResistance)+ "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     delays = data['delays']\n\
@@ -314,15 +316,15 @@ def calculate_T1(filename, expectedT1 =10e-6):
     
 
 
-    
+    const = (mag[0][1]-mag[0][0])/2
+    slope = mag[0][1] - mag[0][0]
     
     
     T1s = np.zeros(len(durationExcitations))
     T1s_error = np.zeros(len(durationExcitations))
     
     for idx,_ in enumerate(durationExcitations):
-        const = (mag[idx][1]-mag[idx][0])/2
-        slope = mag[idx][1] - mag[idx][0]
+
         
         args = [const,slope,expectedT1]
         popt, pcov  = curve_fit(T1_func, delays, mag[idx], p0=args,maxfev=10000)

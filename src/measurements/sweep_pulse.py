@@ -67,7 +67,8 @@ def measure(alazar,
             pulsesPeriod,
             pulseMeasurementLength,
             ampReference,
-            decimation_value):
+            decimation_value,
+            currentResistance):
     typename = "sweep_pulse"
 
     samplingRate = 1e9/decimation_value
@@ -127,7 +128,8 @@ def measure(alazar,
     #pulsesPeriod: " + str(pulsesPeriod) + "\n\
     #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
     #ampReference: " + str(ampReference) + "\n\
-    #decimation_value:" + str(decimation_value) + "\n\n\
+    #decimation_value:" + str(decimation_value) + "\n\
+    #currentResistance:" + str(currentResistance) + "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\

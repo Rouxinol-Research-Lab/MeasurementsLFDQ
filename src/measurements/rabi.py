@@ -46,7 +46,34 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
-def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource,freqMeasurement,freqExcitation,voltage,rf_excitation_amp,rf_measurement_amp,attenuator_att, pulseExcitationLength_init,pulseExcitationLength_final,pulseExcitationLength_step, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,delayBetweenPulses,ampReference,decimation_value):
+def measure(alazar,
+            awg,
+            dg,
+            att,
+            RFsourceMeasurement,
+            RFsourceExcitation,
+            Voltsource,
+            freqMeasurement,
+            freqExcitation,
+            voltage,
+            rf_excitation_amp,
+            rf_measurement_amp,
+            attenuator_att,
+            pulseExcitationLength_init,
+            pulseExcitationLength_final,
+            pulseExcitationLength_step,
+            if_freq,
+            qubitname,
+            voltageSourceState,
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            delayBetweenPulses,
+            ampReference,
+            decimation_value,
+            currentResistance):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -120,6 +147,28 @@ def measure(alazar,awg, dg,att,RFsourceMeasurement,RFsourceExcitation,Voltsource
 
 
     howtoplot = "\
+    #freqMeasurement: " + str(freqMeasurement) + "\n\
+    #freqExcitation: " + str(freqExcitation) + "\n\
+    #voltage: " + str(voltage) + "\n\
+    #rf_excitation_amp: " + str(rf_excitation_amp) + "\n\
+    #rf_measurement_amp: " + str(rf_measurement_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #pulseExcitationLength_init: " + str(pulseExcitationLength_init) + "\n\
+    #pulseExcitationLength_final: " + str(pulseExcitationLength_final) + "\n\
+    #pulseExcitationLength_step: " + str(pulseExcitationLength_step) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qubitname: " + str(qubitname) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #nBuffer: " + str(nBuffer) + "\n\
+    #recordPerBuffers: " + str(recordPerBuffers) + "\n\
+    #waveformHeadCut: " + str(waveformHeadCut) + "\n\
+    #pulsesPeriod: " + str(pulsesPeriod) + "\n\
+    #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
+    #delayBetweenPulses: " + str(delayBetweenPulses) + "\n\
+    #ampReference: " + str(ampReference) + "\n\
+    #decimation_value: " + str(decimation_value) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mag = np.abs(data['Z'])\n\

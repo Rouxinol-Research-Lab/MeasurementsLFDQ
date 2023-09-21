@@ -49,7 +49,26 @@ def loadparams(filename):
 
     return na, att,RFsource,Voltsource,voltage,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qubitname
 
-def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,rf_amp,attenuator_att,na_amp,ave_time, center_freq,span_freq, naverages, npoints, if_freq, qfreq_init, qfreq_final, qfreq_step,qubitname):
+def measure(na,
+            att,
+            RFsource,
+            Voltsource,
+            voltage,
+            voltageSourceState,
+            rf_amp,
+            attenuator_att,
+            na_amp,
+            ave_time,
+            center_freq,
+            span_freq,
+            naverages,
+            npoints,
+            if_freq,
+            qfreq_init,
+            qfreq_final,
+            qfreq_step,
+            qubitname,
+            currentResistance):
     typename = "twotone"
     na.average_points = naverages
     na.averaging = 1
@@ -69,6 +88,23 @@ def measure(na, att,RFsource,Voltsource,voltage,voltageSourceState,rf_amp,attenu
 
 
     howtoplot = "\
+    #voltage: " + str(voltage) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #rf_amp: " + str(rf_amp) + "\n\
+    #attenuator_att: " + str(attenuator_att) + "\n\
+    #na_amp: " + str(na_amp) + "\n\
+    #ave_time: " + str(ave_time) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #naverages: " + str(naverages) + "\n\
+    #npoints: " + str(npoints) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qfreq_init: " + str(qfreq_init) + "\n\
+    #qfreq_final: " + str(qfreq_final) + "\n\
+    #qfreq_step: " + str(qfreq_step) + "\n\
+    #qubitname: " + str(qubitname) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     qfreqs = data['qubit_freqs']\n\
     mags = np.abs(data['Z'])\n\

@@ -72,6 +72,7 @@ def measure(qubitname,
                 volt_init,
                 volt_final,
                 volt_step,
+                currentResistance,
                 ave_time,
                 attenuation_val):
 
@@ -95,6 +96,18 @@ def measure(qubitname,
 
 
     howtoplot = "\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #npoints: " + str(npoints) + "\n\
+    #naverages: " + str(naverages) + "\n\
+    #volt_init: " + str(volt_init) + "\n\
+    #volt_final: " + str(volt_final) + "\n\
+    #volt_step: " + str(volt_step) + "\n\
+    #ave_time: " + str(ave_time) + "\n\
+    #attenuation_val: " + str(attenuation_val) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     volts = data['volts']\n\
     freqs = data['freqs']\n\

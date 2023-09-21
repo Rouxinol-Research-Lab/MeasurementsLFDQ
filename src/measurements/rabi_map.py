@@ -74,7 +74,8 @@ def measure(alazar,
             pulseMeasurementLength,
             delayBetweenPulses,
             ampReference,
-            decimation_value):
+            decimation_value,
+            currentResistance):
     '''
      2 -> A 3 -> B
      4 -> C 5 -> D
@@ -170,6 +171,7 @@ def measure(alazar,
     #delayBetweenPulses: " + str(delayBetweenPulses)+ "\n\
     #ampReference: " + str(ampReference)+ "\n\
     #decimation_value: " + str(decimation_value)+ "\n\
+    #currentResistance: " + str(currentResistance)+ "\n\
     #HOW TO PLOT\n\
     data = np.load(filename)\n\
     duration = data['duration']\n\

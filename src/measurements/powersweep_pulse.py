@@ -47,7 +47,30 @@ def loadparams(filename):
 
 
 def measure(alazar,
-awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att_init,attenuator_att_final,attenuator_att_step, center_freq,span_freq,step_freq, if_freq, qubitname,voltageSourceState,  nBuffer, recordPerBuffers, waveformHeadCut,pulsesPeriod,pulseMeasurementLength,ampReference,decimation_value):
+            awg,
+            dg,
+            att,
+            RFsource,
+            Voltsource,
+            voltage,
+            rf_amp,
+            attenuator_att_init,
+            attenuator_att_final,
+            attenuator_att_step,
+            center_freq,
+            span_freq,
+            step_freq,
+            if_freq,
+            qubitname,
+            voltageSourceState, 
+            nBuffer,
+            recordPerBuffers,
+            waveformHeadCut,
+            pulsesPeriod,
+            pulseMeasurementLength,
+            ampReference,
+            decimation_value,
+            currentResistance):
     typename = "powersweep_pulse"
 
     samplingRate = 1e9/decimation_value
@@ -94,6 +117,26 @@ awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att_init,attenuator_at
 
 
     howtoplot = "\
+    #voltage: " + str(voltage) + "\n\
+    #rf_amp: " + str(rf_amp) + "\n\
+    #attenuator_att_init: " + str(attenuator_att_init) + "\n\
+    #attenuator_att_final: " + str(attenuator_att_final) + "\n\
+    #attenuator_att_step: " + str(attenuator_att_step) + "\n\
+    #center_freq: " + str(center_freq) + "\n\
+    #span_freq: " + str(span_freq) + "\n\
+    #step_freq: " + str(step_freq) + "\n\
+    #if_freq: " + str(if_freq) + "\n\
+    #qubitname: " + str(qubitname) + "\n\
+    #voltageSourceState: " + str(voltageSourceState) + "\n\
+    #nBuffer: " + str(nBuffer) + "\n\
+    #recordPerBuffers: " + str(recordPerBuffers) + "\n\
+    #waveformHeadCut: " + str(waveformHeadCut) + "\n\
+    #pulsesPeriod: " + str(pulsesPeriod) + "\n\
+    #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
+    #ampReference: " + str(ampReference) + "\n\
+    #decimation_value: " + str(decimation_value) + "\n\
+    #currentResistance: " + str(currentResistance) + "\n\
+    #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
     mags = np.abs(data['Z'])\n\
