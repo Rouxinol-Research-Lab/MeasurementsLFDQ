@@ -224,8 +224,8 @@ def plot(filename):
     ax = fig.gca()
     plt.plot(freqs*1e-6,20*np.log10(mag))
     ax.tick_params(labelsize=20)
-    ax.set_xlabel('Frequency (MHz)',fontsize=20)
-    #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
+    ax.set_xlabel('Attenuation (dB)',fontsize=20)
+    ax.set_ylabel('S21 (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
 
