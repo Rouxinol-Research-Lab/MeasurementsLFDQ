@@ -124,7 +124,7 @@ def measure(na,
     mags = np.ndarray(len(qubitfreqs))
     phases = np.ndarray(len(qubitfreqs))
 
-    mags[:] = -5
+    mags[:] = -80
     phases[:] = 0
 
     fig = plt.figure()
