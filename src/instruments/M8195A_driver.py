@@ -69,6 +69,13 @@ class M8195A_driver():
             SCPI_sock_send(self._session,":OUTP{} 0".format(channel))
         print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
+
+    def getError(self):
+        try:
+            get_error(self._session,'')
+        except ValueError:
+            pass
+
     def start(self):
         SCPI_sock_send(self._session,":INIT:IMM")    
         
@@ -356,6 +363,10 @@ class M8195A_driver():
 
     def setSingleWithMarker(self):
         SCPI_sock_send(self._session, ':INST:DACM MARK')
+        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+
+    def setDualWithMarker(self):
+        SCPI_sock_send(self._session, ':INST:DACM DCMarker')
         print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
     def setSingle(self):
