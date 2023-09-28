@@ -211,9 +211,16 @@ def measure(alazar,
     awg.start()
     sleep(0.05)
 
+    
+    dg.setDelay(3,2,1e-6) # B in relation to A
     dg.setBurstPeriod(pulsesPeriod+delays[0]) # set period between shots
     dg.setDelay(4,3,delays[0]) # C in relation to B
+    sleep(0.05)
     I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
+
+
+    dg.setDelay(3,2,durationExcitation) # B in relation to A
+    sleep(0.05)
 
     try:
 
