@@ -135,6 +135,7 @@ def measure(alazar,
 
     timeDurationExcitations = np.arange(pulseExcitationLength_init,pulseExcitationLength_final,pulseExcitationLength_step)
 
+
     Is = np.ndarray(len(timeDurationExcitations))
     Qs = np.ndarray(len(timeDurationExcitations))
 
@@ -206,6 +207,12 @@ def measure(alazar,
     RFsourceExcitation.start_rf()
     awg.start()
     sleep(0.05)
+
+    
+    dg.setDelay(3,2,1e-6) # B in relation to A
+    sleep(0.05)
+    I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
+
 
 
     try:
