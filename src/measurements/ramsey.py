@@ -12,6 +12,7 @@ from toml import load
 import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
+from instruments.SCPI_socket import *
 
 
 def loadparams(filename):
@@ -100,6 +101,12 @@ def measure(alazar,
 
     awg.stop()
 
+    awg.setSingleWithMarker()
+    #awg.setDualWithMarker()
+    SCPI_sock_send(awg._session, ':INST:MEM:EXT:RDIV DIV1')
+    SCPI_sock_send(awg._session, ':TRAC2:MMOD EXT')
+    
+
 
     Voltsource.ramp_voltage(0)
     Voltsource.turn_off()
@@ -187,14 +194,56 @@ def measure(alazar,
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
     RFsourceExcitation.set_frequency(freqExcitation)
     RFsourceExcitation.start_rf()
+    #RFsourceExcitation.setPulsePolarityInverted()
+    RFsourceExcitation.setPulsePolarityNormal()
 
-    awg.setSingleWithMarker()
 
-    awg.setVoltage(1,0.5)
+
+    awg.setVoltage(1,0.6)
     awg.setVoltage(3,1)
     awg.setVoltage(4,1)
     awg.setVoltageOffset(3,0.5)
     awg.setVoltageOffset(4,0.5)
+
+    for idx, delayBetweenPulses in enumerate(delays):
+        clear_output(wait=True)
+
+        awg.stop()
+        sleep(0.05)
+
+        sampleSizeMeasurement = convertToSamples(awgRate,pulsesPeriod+delayBetweenPulses+2*durationExcitation)
+        sampleSizeDelay = convertToSamples(awgRate,delayBetweenPulses)
+
+
+        awg.clearMemory()
+        awg.defineSegment(sampleSizeMeasurement)
+
+        sleep(0.05)
+
+        awg.start()
+
+        sleep(0.05)
+
+        awg.setWave(freq,1, sampleSizeDelay+2*sampleSizeExcitation, sampleSizeMeasurementPulse,awgRate)
+        sleep(timeToWaitForAWGUpload)
+
+        awg.setMarker(0,2)
+        awg.setMarker(sampleSizeExcitation,0)
+        awg.setMarker(sampleSizeDelay+sampleSizeExcitation,2)
+        awg.setMarker(sampleSizeDelay+2*sampleSizeExcitation+sampleSizeMeasurementPulse,0)
+
+        sleep(0.05)
+
+        I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
+
+        Is[idx] = I
+        Qs[idx] = Q 
+        
+        mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
+
+        
+        plt.pause(0.05)
+        plt.plot(delays*1e6,mags)
 
 
     try:
@@ -274,6 +323,8 @@ def measure(alazar,
 
     filename = name+'.npz'
     return filename
+
+
 
 # TODO fix ylabel
 def plot(filename):
