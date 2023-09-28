@@ -18,19 +18,20 @@ class SIM928_driver(VisaInstrument):
 
     def ramp_voltage(self,voltage_final):
         volt_init = self.get_voltage()
-
-        if volt_init > voltage_final:
+        if volt_init == voltage_final:
+            step = 0
+        elif volt_init > voltage_final:
             step = -self._step
         else:
             step = self._step
             
         step_time = self._step_time
+        if step != 0:
+            volts = np.arange(volt_init,voltage_final+step,step)
 
-        volts = np.arange(volt_init,voltage_final+step,step)
-
-        for volt in volts:
-            self.set_voltage(volt)
-            sleep(step_time)
+            for volt in volts:
+                self.set_voltage(volt)
+                sleep(step_time)
 
 
 
