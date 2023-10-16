@@ -156,7 +156,9 @@ class M8195A_driver():
 
 
     def setCWFrequency(self,freq,channel=1):
+
         self.stop()
+        self.setSingle()
 
         _,awgRate,npoints = findAwgRateAndPeriod(freq)
 
