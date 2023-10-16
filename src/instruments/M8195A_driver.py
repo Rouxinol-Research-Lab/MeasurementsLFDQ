@@ -394,7 +394,6 @@ class M8195A_driver():
         • DCMarker  dual channel with marker: Channels 1 and 2 can generate a signal. Channel 1 has two markers output on channel 3 and 4. Channel 2 can generate signals without markers.
         '''
         SCPI_sock_send(self._session, ':INST:DACM MARK')
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
     def setDualWithMarker(self):
         '''
@@ -407,7 +406,6 @@ class M8195A_driver():
         • DCMarker  dual channel with marker: Channels 1 and 2 can generate a signal. Channel 1 has two markers output on channel 3 and 4. Channel 2 can generate signals without markers.
         '''
         SCPI_sock_send(self._session, ':INST:DACM DCMarker')
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
     def setSingle(self):
         '''
@@ -420,4 +418,3 @@ class M8195A_driver():
         • DCMarker  dual channel with marker: Channels 1 and 2 can generate a signal. Channel 1 has two markers output on channel 3 and 4. Channel 2 can generate signals without markers.
         '''
         SCPI_sock_send(self._session, ':INST:DACM SING')
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
