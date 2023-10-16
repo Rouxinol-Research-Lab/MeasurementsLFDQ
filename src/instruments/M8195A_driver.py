@@ -69,6 +69,12 @@ class M8195A_driver():
             SCPI_sock_send(self._session,":OUTP{} 0".format(channel))
         print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
+    def openChanneloutput(self,channel):
+        SCPI_sock_send(self._session,":OUTP{} 1".format(channel))
+
+    def closeChanneloutput(self,channel):
+        SCPI_sock_send(self._session,":OUTP{} 0".format(channel))
+
 
     def getError(self):
         try:
