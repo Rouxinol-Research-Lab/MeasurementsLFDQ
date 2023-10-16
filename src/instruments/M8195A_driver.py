@@ -81,6 +81,15 @@ class M8195A_driver():
         SCPI_sock_send(self._session,":ROSC:FREQ {}".format(str(frequency)))
 
     
+    def setRefInClockExternal(self):
+        '''
+        Set or query the reference clock source.
+        • EXTernal: reference is taken from REF CLK IN.
+        • AXI: reference is taken from AXI backplane.
+        • INTernal: reference is taken from module internal reference oscillator. May not be available with every hardware.
+        Command not supported with Revision 1 hardware.
+        '''
+        SCPI_sock_send(self._session,":ROSC:SOUR EXT")
 
     def getError(self):
         try:
