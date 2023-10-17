@@ -31,7 +31,10 @@ def convertToStr(data):
     
     return data_str
 
-
+def getIEEEBlockTag(data):
+    dataSize = len(data)
+    numberLength =  int(np.log10(dataSize)+1)
+    return "#{}{}".format(numberLength,dataSize)
 
 def findAwgRateAndPeriod(freq,numberOfChannels=1):
     multiple = 256
