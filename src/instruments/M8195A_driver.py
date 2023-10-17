@@ -271,7 +271,7 @@ class M8195A_driver():
         if not isinstance(div_n, int):
             raise TypeError('div_n must be integer.')
 
-        if div_n != 1 or div_n != 2 or div_n != 4:
+        if div_n != 1 and div_n != 2 and div_n != 4:
             raise ValueError('div_n must be 1, 2 or 4.')
 
         SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV{}".format(div_n))
