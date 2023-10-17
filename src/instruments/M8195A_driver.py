@@ -252,6 +252,15 @@ class M8195A_driver():
             SCPI_sock_send(self._session,":TRAC4:MMOD EXT")
             print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
+    def getMemoryDivision(self):
+        '''DIV1|DIV2|DIV4
+            • DIV1  Memory sample rate is the DAC Sample Rate.
+            • DIV2  Memory sample rate is the DAC Sample Rate divided by 2.
+            • DIV4  Memory sample rate is the DAC Sample Rate divided by 4.
+            Use this command or query to set or get the Sample Rate Divider of the Extended Memory. This value determines also the amount of available Extended Memory for each channel (see section 1.5.5).
+        '''
+        return SCPI_sock_query(self._session,":INST:MEM:EXT:RDIV?")
+
     def setMemoryDivision(self, div_n):
         '''DIV1|DIV2|DIV4
             • DIV1  Memory sample rate is the DAC Sample Rate.
