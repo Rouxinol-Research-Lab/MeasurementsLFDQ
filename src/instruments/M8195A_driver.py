@@ -450,7 +450,7 @@ class M8195A_driver():
 
     def setDual(self):
         '''
-        DCMarker
+        DUAL
         • SINGle  Channel 1 can generate a signal
         • DUAL  Channels 1 and 4 can generate a signal, channels 2 and 3 are unused
         • FOUR  Channels 1, 2, 3, and 4 can generate a signal
