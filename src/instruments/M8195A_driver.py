@@ -267,19 +267,26 @@ class M8195A_driver():
 
         SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV{}".format(div_n))
 
-    def setChannelToExtended(self,channel):
+    def setChannelMemoryToExtended(self,channel):
         '''EXTended
             • INTernal  the channel uses Internal Memory
             • EXTended  the channel uses Extended Memory
         '''
         SCPI_sock_send(self._session,":TRAC{}:MMOD EXT".format(channel))
         
-    def setChannelToInternal(self,channel):
+    def setChannelMemoryToInternal(self,channel):
         '''INTernal
             • INTernal  the channel uses Internal Memory
             • EXTended  the channel uses Extended Memory
         '''
         SCPI_sock_send(self._session,":TRAC{}:MMOD INT".format(channel))
+
+    def getChannelMemorySetting(self,channel):
+        '''
+            • INTernal  the channel uses Internal Memory
+            • EXTended  the channel uses Extended Memory
+        '''
+        return SCPI_sock_query(self._session,":TRAC{}:MMOD?".format(channel))
 
     def _convertToByte(self,data, A):
 
