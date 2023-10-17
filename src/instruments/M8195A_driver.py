@@ -253,7 +253,19 @@ class M8195A_driver():
             print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
             
 
+    def setChannelToExtended(self,channel):
+        '''EXTended
+            • INTernal  the channel uses Internal Memory
+            • EXTended  the channel uses Extended Memory
+        '''
+        SCPI_sock_send(self._session,":TRAC{}:MMOD EXT".format(channel))
         
+    def setChannelToInternal(self,channel):
+        '''INTernal
+            • INTernal  the channel uses Internal Memory
+            • EXTended  the channel uses Extended Memory
+        '''
+        SCPI_sock_send(self._session,":TRAC{}:MMOD INT".format(channel))
 
     def _convertToByte(self,data, A):
 
