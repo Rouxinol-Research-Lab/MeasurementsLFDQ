@@ -40,3 +40,13 @@ def prepareSignalData(measurementPulseLength,excitationPulsesLength,excitationPu
     pulseMarkers[-len(awgOscMeasurement):] = markerValueForMeasurement
 
     return x,pulseMeasurement,pulsesExcitation,pulseMarkers
+
+def prepareMeasurementSignalData(measurementPulseLength,freq,awgRate):
+    # This is to guarantee that it is only half a period oscillation
+    measurementPulseLength = np.ceil(measurementPulseLength*freq*2)/freq/2
+    
+    xMeasurement = np.arange(0,measurementPulseLength,1/awgRate)
+    awgOscMeasurement = np.array((2**7-1)*np.sin(2*np.pi*(freq)*xMeasurement),dtype=np.int8)
+
+
+    return xMeasurement,pulseMeasurement
