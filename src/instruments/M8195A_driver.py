@@ -251,7 +251,21 @@ class M8195A_driver():
             print("Setting channel 4 memory to extended.")
             SCPI_sock_send(self._session,":TRAC4:MMOD EXT")
             print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
+
+    def setMemoryDivision(self, div_n):
+        '''DIV1|DIV2|DIV4
+            • DIV1  Memory sample rate is the DAC Sample Rate.
+            • DIV2  Memory sample rate is the DAC Sample Rate divided by 2.
+            • DIV4  Memory sample rate is the DAC Sample Rate divided by 4.
+            Use this command or query to set or get the Sample Rate Divider of the Extended Memory. This value determines also the amount of available Extended Memory for each channel (see section 1.5.5).
+        '''
+        if not isinstance(div_n, int):
+            raise TypeError('div_n must be integer.')
+
+        if div_n != 1 or div_n != 2 or div_n != 4:
+            raise ValueError('div_n must be 1, 2 or 4.')
+
+        SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV{}".format(div_n))
 
     def setChannelToExtended(self,channel):
         '''EXTended
