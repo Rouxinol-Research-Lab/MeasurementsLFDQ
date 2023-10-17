@@ -409,6 +409,17 @@ class M8195A_driver():
         result = SCPI_sock_query(self._session, ':VOLT{}:OFFS?'.format(channel))
         print(result)
 
+    def getChannelSetting(self):
+        '''
+        • SINGle  Channel 1 can generate a signal
+        • DUAL  Channels 1 and 4 can generate a signal, channels 2 and 3 are unused
+        • FOUR  Channels 1, 2, 3, and 4 can generate a signal
+        • MARKer  Channel 1 with two markers output on channel 3 and 4
+        • DCDuplicate  dual channel duplicate: Channels 1, 2, 3, and 4 can generate a signal. Channel 3 generates the same signal as channel 1. Channel 4 generates the same signal as channel 2.
+        • DCMarker  dual channel with marker: Channels 1 and 2 can generate a signal. Channel 1 has two markers output on channel 3 and 4. Channel 2 can generate signals without markers.
+        '''
+        return SCPI_sock_query(self._session, ':INST:DACM?')
+
     def setSingleWithMarker(self):
         '''
         MARKer
