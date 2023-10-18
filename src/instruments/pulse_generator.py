@@ -1,6 +1,6 @@
 import numpy as np
 
-def prepareSignalData(measurementPulseLength,excitationPulsesLength,excitationPulsesDelay,excitationPulsesPhase,freq,awgRate,markerValueForExcitation=1,markerValueForMeasurement=2):
+def prepareSignalData(measurementPulseLength,excitationPulsesLength,excitationPulsesDelay,excitationPulsesPhase,freq,awgRate,markerValueForExcitation=2,markerValueForMeasurement=1):
 
 
     # This is to guarantee that it is only half a period oscillation
@@ -38,15 +38,22 @@ def prepareSignalData(measurementPulseLength,excitationPulsesLength,excitationPu
     
     pulseMeasurement[-len(awgOscMeasurement):] = awgOscMeasurement
     pulseMarkers[-len(awgOscMeasurement):] = markerValueForMeasurement
+    pulseMarkers[-1]=0
 
     return x,pulseMeasurement,pulsesExcitation,pulseMarkers
 
-def prepareMeasurementSignalData(measurementPulseLength,freq,awgRate):
+def prepareMeasurementSignalData(measurementPulseLength,freq,awgRate,markerValueForMeasurement=1):
     # This is to guarantee that it is only half a period oscillation
     measurementPulseLength = np.ceil(measurementPulseLength*freq*2)/freq/2
     
     xMeasurement = np.arange(0,measurementPulseLength,1/awgRate)
     awgOscMeasurement = np.array((2**7-1)*np.sin(2*np.pi*(freq)*xMeasurement),dtype=np.int8)
+    pulseMarkers = np.ndarray(len(xMeasurement),dtype=np.int8)
+    pulseMarkers.fill(markerValueForMeasurement)
+    pulseMarkers[-1]=0
 
+    return xMeasurement,awgOscMeasurement,pulseMarkers
 
-    return xMeasurement,pulseMeasurement
+def addPadding(pulses,padding = 512):
+    addedZerosLength = len(pulses)%padding
+    return np.append(np.zeros(padding-addedZerosLength,dtype=np.int8),pulses)

@@ -82,8 +82,7 @@ class M8195A_driver():
     def downloadDataToAwg(self,data,channel,offset):
         tag = getIEEEBlockTag(data)
         cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
-        self._session.sendall(cmd.encode()+bytes(data)+"\n".encode())    
-        SCPI_sock_query(self._session,':TRAC1:CAT?')
+        self._session.sendall(cmd.encode()+bytes(data)+"\n".encode())
 
     def setRefInClockFrequency(self,frequency):
         '''Set or query the expected reference clock frequency, if the external reference clock source is selected. <frequency (Hz)>|MINimum|MAXimum. 10 MHz to 300 MHz'''
