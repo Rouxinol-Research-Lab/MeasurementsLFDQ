@@ -183,7 +183,7 @@ def measure(alazar,
     sleep(1)
     awg.getError()
 
-    awg.setVoltage(1,0.7)
+    awg.setVoltage(1,0.6)
     awg.setVoltage(3,1)
     awg.setVoltage(4,1)
 

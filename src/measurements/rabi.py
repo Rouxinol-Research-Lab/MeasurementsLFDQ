@@ -13,7 +13,7 @@ import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
 
-
+from instruments.pulse_generator import *
 def loadparams(filename):
 
     parameters = load(filename)
@@ -48,7 +48,6 @@ def loadparams(filename):
 
 def measure(alazar,
             awg,
-            dg,
             att,
             RFsourceMeasurement,
             RFsourceExcitation,
@@ -62,6 +61,7 @@ def measure(alazar,
             pulseExcitationLength_init,
             pulseExcitationLength_final,
             pulseExcitationLength_step,
+            excitationPulseIFAmp,
             if_freq,
             qubitname,
             voltageSourceState,
@@ -94,23 +94,17 @@ def measure(alazar,
       delay
        
     '''
-    
-    typename = "rabi"
-
+    typename='rabi'
     samplingRate = 1e9/decimation_value
 
-    dg.setLevelAmplitude(1,3) # Set AB to 3 Volts
-    dg.setLevelAmplitude(2,3) # Set CD to 3 Volts
-    dg.setTriggerSource(5) # Set trigger to be controlled by me
-    dg.setBurstCount(int(nBuffer*recordPerBuffers)) # set number of shots
-    dg.setBurstMode(1)  
+    awg.stop()
 
+    awg.setRefInClockFrequency(10e6)
+    awg.setRefInClockExternal()
+    awg.setDualWithMarker()
+    awg.setMemoryDivision(2)
+    awg.setChannelMemoryToExtended(2)
 
-
-    dg.setDelay(4,3,delayBetweenPulses) # C in relation to B
-    dg.setDelay(5,4,pulseMeasurementLength) # D in relation to C
-    
-    
 
     pointsPerRecord = int(pulseMeasurementLength*samplingRate/256)*256
 
@@ -129,9 +123,6 @@ def measure(alazar,
 
     Voltsource.ramp_voltage(0)
     Voltsource.turn_off()
-
-    awg.setCWFrequency(if_freq)
-
 
     timeDurationExcitations = np.arange(pulseExcitationLength_init,pulseExcitationLength_final,pulseExcitationLength_step)
 
@@ -198,21 +189,62 @@ def measure(alazar,
         sleep(0.05)
         Voltsource.ramp_voltage(voltage)
 
+    # TODO I have to fix this for 2 channels
+    numberOfChannels = 1
+    periodPerPacket,awgRate,sampleSizePacket = findAwgRateAndPeriod(if_freq,numberOfChannels)
+    awgRate = awgRate/2
+    awg.set_sampleRate(awgRate*2)
+
+    sampleSizeMeasurement = int(awgRate*pulsesPeriod/512)*512
+
+    print('Memory allocation')
+    SCPI_sock_send(awg._session,":TRAC1:DEL:ALL")
+    SCPI_sock_send(awg._session,":TRAC2:DEL:ALL")
+    SCPI_sock_send(awg._session,":TRAC1:DEF 1,{},0".format(sampleSizeMeasurement))
+    sleep(1)
+    awg.getError()
+
+
+
+    awg.setVoltage(1,0.6)
+    awg.setVoltage(2,1)
+    awg.setVoltage(3,1)
+    awg.setVoltage(4,1)
+
+    awg.setVoltageOffset(3,0.5)
+    awg.setVoltageOffset(4,0.5)
+
+    awg.openChanneloutput(1)
+    awg.openChanneloutput(2)
+    awg.openChanneloutput(3)
+    awg.openChanneloutput(4)
+
     RFsourceMeasurement.set_amplitude(rf_measurement_amp)
     RFsourceMeasurement.set_frequency(freqMeasurement-if_freq)
     RFsourceMeasurement.start_rf()
+    RFsourceMeasurement.setPulsePolarityInverted()
 
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
-    RFsourceExcitation.set_frequency(freqExcitation)
+    RFsourceExcitation.set_frequency(freqExcitation-if_freq)
     RFsourceExcitation.start_rf()
+    RFsourceExcitation.setPulsePolarityNormal()
+
+
+    _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[1e-6],[0],[0],if_freq,awgRate)
+    pulseMeasurement = addPadding(pulseMeasurement)
+    pulsesExcitation = addPadding(pulsesExcitation)
+    markers = addPadding(markers)
+
+    withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+    awg.downloadDataToAwg(withmarker, 1,0)
+    sleep(1)
+    awg.downloadDataToAwg(pulsesExcitation, 2,0)
+    sleep(1)
+
+
     awg.start()
     sleep(0.05)
-
-    
-    dg.setDelay(3,2,1e-6) # B in relation to A
-    sleep(0.05)
-    I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
-
+    I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
 
 
     try:
@@ -220,12 +252,26 @@ def measure(alazar,
         for idx, duration in enumerate(timeDurationExcitations):
             clear_output(wait=True)
 
-            dg.setDelay(3,2,duration) # B in relation to A
+            awg.stop()
 
-            dg.setBurstPeriod(pulsesPeriod+duration) # set period between shots
+            
+            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[duration],[delayBetweenPulses],[0],if_freq,awgRate)
+            pulseMeasurement = addPadding(pulseMeasurement)
+            pulsesExcitation = addPadding(pulsesExcitation)
+            markers = addPadding(markers)
 
+            
+    
+            withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+            awg.downloadDataToAwg(withmarker, 1,0)
+            sleep(1)
+            awg.downloadDataToAwg(pulsesExcitation, 2,0)
+            sleep(1)
+    
+
+            awg.start()
             sleep(0.05)
-            I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
+            I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
             Is[idx] = I
             Qs[idx] = Q 
             
@@ -244,6 +290,11 @@ def measure(alazar,
 
         RFsourceExcitation.stop_rf()
         RFsourceMeasurement.stop_rf()
+
+        awg.closeChanneloutput(1)
+        awg.closeChanneloutput(2)
+        awg.closeChanneloutput(3)
+        awg.closeChanneloutput(4)
         awg.stop()
 
         if voltageSourceState:
@@ -278,7 +329,7 @@ def plot(filename):
     plt.plot(duration*1e9,20*np.log10(mag))
     ax.tick_params(labelsize=20)
     ax.set_xlabel('Pulse Duration (ns)',fontsize=20)
-    #ax.set_ylabel(str(type)+' (dB)',fontsize=20)
+    ax.set_ylabel('S21 (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()
 
