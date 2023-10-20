@@ -207,7 +207,7 @@ def measure(alazar,
 
 
     awg.setVoltage(1,0.6)
-    awg.setVoltage(2,1)
+    awg.setVoltage(2,excitationPulseIFAmp)
     awg.setVoltage(3,1)
     awg.setVoltage(4,1)
 
