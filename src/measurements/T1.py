@@ -71,6 +71,7 @@ def measure(alazar,
             delayBetweenPulses_init,
             delayBetweenPulses_final,
             delayBetweenPulses_step,
+            excitationPulseIFAmp,
             ampReference,
             decimation_value,
             currentResistance):
@@ -114,11 +115,6 @@ def measure(alazar,
     RFsourceMeasurement.start_pulse()
     RFsourceMeasurement.start_mod()
     RFsourceMeasurement.set_pulse_trigger_external()
-
-    RFsourceExcitation.stop_rf()
-    RFsourceExcitation.start_pulse()
-    RFsourceExcitation.start_mod()
-    RFsourceExcitation.set_pulse_trigger_external()
 
     awg.stop()
 
@@ -187,13 +183,18 @@ def measure(alazar,
     line, = ax.plot(delays,20*np.log10(np.sqrt(Is**2+Qs**2)))
 
 
+    if voltageSourceState:
+        Voltsource.turn_on()
+        sleep(0.05)
+        Voltsource.ramp_voltage(voltage)
+
     # TODO I have to fix this for 2 channels
     numberOfChannels = 1
     periodPerPacket,awgRate,sampleSizePacket = findAwgRateAndPeriod(if_freq,numberOfChannels)
     awgRate = awgRate/2
     awg.set_sampleRate(awgRate*2)
 
-    sampleSizeMeasurement = int(awgRate*pulsesPeriod/512)*512
+    sampleSizeMeasurement = int(awgRate*(pulsesPeriod+delayBetweenPulses_final)/512)*512
 
     print('Memory allocation')
     SCPI_sock_send(awg._session,":TRAC1:DEL:ALL")
@@ -205,7 +206,7 @@ def measure(alazar,
 
 
     awg.setVoltage(1,0.6)
-    awg.setVoltage(2,1)
+    awg.setVoltage(2,excitationPulseIFAmp)
     awg.setVoltage(3,1)
     awg.setVoltage(4,1)
 
@@ -222,11 +223,6 @@ def measure(alazar,
     RFsourceMeasurement.start_rf()
     RFsourceMeasurement.setPulsePolarityInverted()
 
-    RFsourceExcitation.set_amplitude(rf_excitation_amp)
-    RFsourceExcitation.set_frequency(freqExcitation-if_freq)
-    RFsourceExcitation.start_rf()
-    RFsourceExcitation.setPulsePolarityNormal()
-    
     
     try:
 
@@ -236,7 +232,7 @@ def measure(alazar,
             awg.stop()
 
             
-            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[durationExcitation],[delayBetweenPulses],[0],if_freq,awgRate)
+            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[durationExcitation],[delayBetweenPulses],[0],if_freq,freqExcitation,awgRate)
             pulseMeasurement = addPadding(pulseMeasurement)
             pulsesExcitation = addPadding(pulsesExcitation)
             markers = addPadding(markers)
@@ -261,47 +257,8 @@ def measure(alazar,
             
             plt.pause(0.05)
             plt.plot(delays*1e6,mags)
-
-        for idx, delayBetweenPulses in enumerate(delays):
-            clear_output(wait=True)
-
-            awg.stop()
-
-            
-            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[durationExcitation],[delayBetweenPulses],[0],if_freq,awgRate)
-            pulseMeasurement = addPadding(pulseMeasurement)
-            pulsesExcitation = addPadding(pulsesExcitation)
-            markers = addPadding(markers)
-
-            
-    
-            withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
-            awg.downloadDataToAwg(withmarker, 1,0)
-            sleep(1)
-            awg.downloadDataToAwg(pulsesExcitation, 2,0)
-            sleep(1)
-    
-
-            awg.start()
-            sleep(0.05)
-            I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
-            Is[idx] = I
-            Qs[idx] = Q 
-            
-            mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
-
-            
-            plt.pause(0.05)
-            plt.plot(delays*1e6,mags)
-
-            # line.set_ydata(mags)
-            # ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
-            
-            # fig.canvas.draw()
             # fig.canvas.flush_events()
 
-
-        RFsourceExcitation.stop_rf()
         RFsourceMeasurement.stop_rf()
 
         awg.closeChanneloutput(1)

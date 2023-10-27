@@ -12,6 +12,8 @@ from toml import load
 import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
+from instruments.SCPI_socket import *
+
 
 from instruments.pulse_generator import *
 def loadparams(filename):
@@ -46,22 +48,23 @@ def loadparams(filename):
     return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
+
+    
+def convertToSamples(awgRate,length):
+    return  int(awgRate*length/512)*512
+
 def measure(alazar,
             awg,
             att,
             RFsourceMeasurement,
-            RFsourceExcitation,
             Voltsource,
             freqMeasurement,
             freqExcitation,
+            durationExcitation,
             voltage,
             rf_excitation_amp,
             rf_measurement_amp,
             attenuator_att,
-            pulseExcitationLength_init,
-            pulseExcitationLength_final,
-            pulseExcitationLength_step,
-            excitationPulseIFAmp,
             if_freq,
             qubitname,
             voltageSourceState,
@@ -70,31 +73,17 @@ def measure(alazar,
             waveformHeadCut,
             pulsesPeriod,
             pulseMeasurementLength,
-            delayBetweenPulses,
+            delayBetweenPulses_init,
+            delayBetweenPulses_final,
+            delayBetweenPulses_step,
             ampReference,
             decimation_value,
-            currentResistance):
-    '''
-     2 -> A 3 -> B
-     4 -> C 5 -> D
+            currentResistance,
+            saveData = True):
     
-      pulsesPeriod
-     |------------------------------------------------------------------------------|
-      _________________         _____                                                _________________         _____ 
-     |                 |       |     |                                              |                 |       |     |
-     |                 |       |     |                                              |                 |       |     |
-     |                 |_______|     |______________________________________________|                 |_______|     |_____ ...
-    
-     |-----------------|       |-----|
-     A                 B       C     D
-     excitation                 measurement
+    typename = "echo"
 
-     |-------------------------|
-     A                         C
-      delay
-       
-    '''
-    typename='rabi'
+
     samplingRate = 1e9/decimation_value
 
     awg.stop()
@@ -119,11 +108,10 @@ def measure(alazar,
     Voltsource.ramp_voltage(0)
     Voltsource.turn_off()
 
-    timeDurationExcitations = np.arange(pulseExcitationLength_init,pulseExcitationLength_final,pulseExcitationLength_step)
+    delays = np.arange(delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step)
 
-
-    Is = np.ndarray(len(timeDurationExcitations))
-    Qs = np.ndarray(len(timeDurationExcitations))
+    Is = np.ndarray(len(delays))
+    Qs = np.ndarray(len(delays))
 
     Is[:] = 10**(-45/20)
     Qs[:] = 10**(-45/20)
@@ -136,13 +124,11 @@ def measure(alazar,
     howtoplot = "\
     #freqMeasurement: " + str(freqMeasurement) + "\n\
     #freqExcitation: " + str(freqExcitation) + "\n\
+    #durationExcitation: " + str(durationExcitation) + "\n\
     #voltage: " + str(voltage) + "\n\
     #rf_excitation_amp: " + str(rf_excitation_amp) + "\n\
     #rf_measurement_amp: " + str(rf_measurement_amp) + "\n\
     #attenuator_att: " + str(attenuator_att) + "\n\
-    #pulseExcitationLength_init: " + str(pulseExcitationLength_init) + "\n\
-    #pulseExcitationLength_final: " + str(pulseExcitationLength_final) + "\n\
-    #pulseExcitationLength_step: " + str(pulseExcitationLength_step) + "\n\
     #if_freq: " + str(if_freq) + "\n\
     #qubitname: " + str(qubitname) + "\n\
     #voltageSourceState: " + str(voltageSourceState) + "\n\
@@ -151,20 +137,22 @@ def measure(alazar,
     #waveformHeadCut: " + str(waveformHeadCut) + "\n\
     #pulsesPeriod: " + str(pulsesPeriod) + "\n\
     #pulseMeasurementLength: " + str(pulseMeasurementLength) + "\n\
-    #delayBetweenPulses: " + str(delayBetweenPulses) + "\n\
+    #delayBetweenPulses_init: " + str(delayBetweenPulses_init) + "\n\
+    #delayBetweenPulses_final: " + str(delayBetweenPulses_final) + "\n\
+    #delayBetweenPulses_step: " + str(delayBetweenPulses_step) + "\n\
     #ampReference: " + str(ampReference) + "\n\
     #decimation_value: " + str(decimation_value) + "\n\
-    #currentResistance: " + str(currentResistance) + "\n\
+    #currentResistance: " + str(currentResistance)+ "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
-    freqs = data['freqs']\n\
+    delays = data['delays']\n\
     mag = np.abs(data['Z'])\n\
     phase = np.unwrap(np.angle(data['Z']))\n\
     fig = plt.figure(figsize=(10,7))\n\
     ax = fig.gca()\n\
-    plt.plot(freqs*1e-6,20*np.log10(mag))\n\
+    plt.plot(delays*1e6,20*np.log10(mag))\n\
     ax.tick_params(labelsize=20)\n\
-    ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
+    ax.set_xlabel('Delay (us)',fontsize=20)\n\
     ax.set_ylabel('S21 (dB)',fontsize=20)\n\
     ax.set_title('"+name+"',fontsize=16)\n\
     plt.show()"
@@ -176,7 +164,7 @@ def measure(alazar,
     fig = plt.figure()
     ax = fig.gca()
 
-    line, = ax.plot(timeDurationExcitations,20*np.log10(np.sqrt(Is**2+Qs**2)))
+    line, = ax.plot(delays,20*np.log10(np.sqrt(Is**2+Qs**2)))
 
 
     if voltageSourceState:
@@ -184,13 +172,13 @@ def measure(alazar,
         sleep(0.05)
         Voltsource.ramp_voltage(voltage)
 
-    # TODO I have to fix this for 2 channels
+   # TODO I have to fix this for 2 channels
     numberOfChannels = 1
     periodPerPacket,awgRate,sampleSizePacket = findAwgRateAndPeriod(if_freq,numberOfChannels)
     awgRate = awgRate/2
     awg.set_sampleRate(awgRate*2)
 
-    sampleSizeMeasurement = int(awgRate*pulsesPeriod/512)*512
+    sampleSizeMeasurement = int(awgRate*(pulsesPeriod+delayBetweenPulses_final)/512)*512
 
     print('Memory allocation')
     SCPI_sock_send(awg._session,":TRAC1:DEL:ALL")
@@ -202,7 +190,7 @@ def measure(alazar,
 
 
     awg.setVoltage(1,0.6)
-    awg.setVoltage(2,excitationPulseIFAmp)
+    awg.setVoltage(2,rf_excitation_amp)
     awg.setVoltage(3,1)
     awg.setVoltage(4,1)
 
@@ -220,45 +208,27 @@ def measure(alazar,
     RFsourceMeasurement.setPulsePolarityInverted()
 
 
-    # A first long pulse to see if it works
-    _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[1e-6],[delayBetweenPulses],[0],if_freq,freqExcitation,awgRate)
-    pulseMeasurement = addPadding(pulseMeasurement)
-    pulsesExcitation = addPadding(pulsesExcitation)
-    markers = addPadding(markers)
-
-    
-    withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
-    awg.downloadDataToAwg(withmarker, 1,0)
-    sleep(1)
-    awg.downloadDataToAwg(pulsesExcitation, 2,0)
-    sleep(1)
-
-
-    awg.start()
-    sleep(0.05)
-    I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
-
     try:
 
-        for idx, duration in enumerate(timeDurationExcitations):
+        for idx, delayBetweenPulses in enumerate(delays):
             clear_output(wait=True)
 
             awg.stop()
 
             
-            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[duration],[delayBetweenPulses],[0],if_freq,freqExcitation,awgRate)
+            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[durationExcitation,durationExcitation*2,durationExcitation],[delayBetweenPulses,delayBetweenPulses,0],[0,0,0],if_freq,freqExcitation,awgRate)
             pulseMeasurement = addPadding(pulseMeasurement)
             pulsesExcitation = addPadding(pulsesExcitation)
             markers = addPadding(markers)
 
             
-    
+
             withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
             awg.downloadDataToAwg(withmarker, 1,0)
             sleep(1)
             awg.downloadDataToAwg(pulsesExcitation, 2,0)
             sleep(1)
-    
+
 
             awg.start()
             sleep(0.05)
@@ -270,7 +240,12 @@ def measure(alazar,
 
             
             plt.pause(0.05)
-            plt.plot(timeDurationExcitations,mags)
+            plt.plot(delays*1e6,mags)
+
+            if saveData:
+                Z = Is+Qs*1j
+
+                np.savez(name,header=howtoplot,delays=delays,Z=Z)
 
             # line.set_ydata(mags)
             # ax.set_ylim(np.min(mags)-1,np.max(mags)+1)
@@ -279,8 +254,8 @@ def measure(alazar,
             # fig.canvas.flush_events()
 
 
+           
         RFsourceMeasurement.stop_rf()
-
         awg.closeChanneloutput(1)
         awg.closeChanneloutput(2)
         awg.closeChanneloutput(3)
@@ -292,9 +267,7 @@ def measure(alazar,
             Voltsource.turn_off()
 
 
-        Z = Is+Qs*1j
 
-        np.savez(name,header=howtoplot,duration=timeDurationExcitations,Z=Z)
         clear_output(wait=True)
         plt.pause(0.05)
         plt.show()
@@ -307,18 +280,19 @@ def measure(alazar,
     filename = name+'.npz'
     return filename
 
+
+
 # TODO fix ylabel
 def plot(filename):
     data = np.load(filename)
-    #type = data['type']
-    duration = data['duration']
+    delays = data['delays']
     mag = np.abs(data['Z'])
     phase = np.unwrap(np.angle(data['Z']))
     fig = plt.figure(figsize=(10,7))
     ax = fig.gca()
-    plt.plot(duration*1e9,20*np.log10(mag))
+    plt.plot(delays*1e6,20*np.log10(mag))
     ax.tick_params(labelsize=20)
-    ax.set_xlabel('Pulse Duration (ns)',fontsize=20)
+    ax.set_xlabel('Delay (µs)',fontsize=20)
     ax.set_ylabel('S21 (dB)',fontsize=20)
     ax.set_title(filename,fontsize=16)
     plt.show()

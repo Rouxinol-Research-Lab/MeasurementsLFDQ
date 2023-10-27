@@ -116,10 +116,6 @@ def measure(alazar,
     RFsourceMeasurement.start_mod()
     RFsourceMeasurement.set_pulse_trigger_external()
 
-    RFsourceExcitation.stop_rf()
-    RFsourceExcitation.start_pulse()
-    RFsourceExcitation.start_mod()
-    RFsourceExcitation.set_pulse_trigger_external()
 
 
     Voltsource.ramp_voltage(0)
@@ -197,11 +193,6 @@ def measure(alazar,
     awgRate = awgRate/2
     awg.set_sampleRate(awgRate*2)
 
-    _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[pulseExcitationLength],[delayBetweenPulses],[0],if_freq,awgRate)
-    pulseMeasurement = addPadding(pulseMeasurement)
-    pulsesExcitation = addPadding(pulsesExcitation)
-    markers = addPadding(markers)
-
     sampleSizeMeasurement = int(awgRate*pulsesPeriod/512)*512
 
     print('Memory allocation')
@@ -209,16 +200,6 @@ def measure(alazar,
     SCPI_sock_send(awg._session,":TRAC2:DEL:ALL")
     SCPI_sock_send(awg._session,":TRAC1:DEF 1,{},0".format(sampleSizeMeasurement))
     sleep(1)
-    awg.getError()
-
-
-    print("Downloading data to awg")
-    withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
-    awg.downloadDataToAwg(withmarker, 1,0)
-    sleep(1)
-    awg.downloadDataToAwg(pulsesExcitation, 2,0)
-    sleep(1)
-    awg.getError()
 
     awg.setVoltage(1,0.6)
     awg.setVoltage(2,excitationPulseIFAmp)
@@ -238,10 +219,7 @@ def measure(alazar,
     RFsourceMeasurement.start_rf()
     RFsourceMeasurement.setPulsePolarityInverted()
 
-    RFsourceExcitation.set_amplitude(rf_excitation_amp)
-    RFsourceExcitation.start_rf()
-    RFsourceExcitation.setPulsePolarityNormal()
-    awg.start()
+
     sleep(0.05)
 
 
@@ -250,8 +228,22 @@ def measure(alazar,
 
         for idx, qfreq in enumerate(qubitfreqs):
             clear_output(wait=True)
-            RFsourceExcitation.set_frequency(qfreq-if_freq)
-            sleep(0.05)
+
+            awg.stop()
+
+            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[pulseExcitationLength],[delayBetweenPulses],[0],if_freq,qfreq,awgRate)
+            pulseMeasurement = addPadding(pulseMeasurement)
+            pulsesExcitation = addPadding(pulsesExcitation)
+            markers = addPadding(markers)
+
+            withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+            awg.downloadDataToAwg(withmarker, 1,0)
+            sleep(1)
+            awg.downloadDataToAwg(pulsesExcitation, 2,0)
+            sleep(1)
+
+            awg.start()
+
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
             Is[idx] = I
             Qs[idx] = Q 
@@ -270,7 +262,6 @@ def measure(alazar,
             # fig.canvas.flush_events()
 
 
-        RFsourceExcitation.stop_rf()
         RFsourceMeasurement.stop_rf()
 
         awg.closeChanneloutput(1)

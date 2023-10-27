@@ -15,6 +15,7 @@ from pyvisa.errors import VisaIOError
 from instruments.SCPI_socket import *
 
 
+from instruments.pulse_generator import *
 def loadparams(filename):
 
     parameters = load(filename)
@@ -53,9 +54,9 @@ def convertToSamples(awgRate,length):
     return  int(awgRate*length/512)*512
 
 def measure(alazar,
-            awg,att,
+            awg,
+            att,
             RFsourceMeasurement,
-            RFsourceExcitation,
             Voltsource,
             freqMeasurement,
             freqExcitation,
@@ -78,14 +79,21 @@ def measure(alazar,
             ampReference,
             decimation_value,
             currentResistance,
-            roundDelayArray = 6,
-            timeToWaitForAWGUpload = 5,
             saveData = True):
     
     typename = "ramsey"
 
+
     samplingRate = 1e9/decimation_value
-    
+
+    awg.stop()
+
+    awg.setRefInClockFrequency(10e6)
+    awg.setRefInClockExternal()
+    awg.setDualWithMarker()
+    awg.setMemoryDivision(2)
+    awg.setChannelMemoryToExtended(2)
+
 
     pointsPerRecord = int(pulseMeasurementLength*samplingRate/256)*256
 
@@ -94,24 +102,13 @@ def measure(alazar,
     RFsourceMeasurement.start_mod()
     RFsourceMeasurement.set_pulse_trigger_external()
 
-    RFsourceExcitation.stop_rf()
-    RFsourceExcitation.start_pulse()
-    RFsourceExcitation.start_mod()
-    RFsourceExcitation.set_pulse_trigger_external()
-
     awg.stop()
-
-    awg.setSingleWithMarker()
-    #awg.setDualWithMarker()
-    SCPI_sock_send(awg._session, ':INST:MEM:EXT:RDIV DIV1')
-    SCPI_sock_send(awg._session, ':TRAC2:MMOD EXT')
-    
 
 
     Voltsource.ramp_voltage(0)
     Voltsource.turn_off()
 
-    delays = np.round(np.arange(delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step,),roundDelayArray)
+    delays = np.arange(delayBetweenPulses_init, delayBetweenPulses_final, delayBetweenPulses_step)
 
     Is = np.ndarray(len(delays))
     Qs = np.ndarray(len(delays))
@@ -145,8 +142,6 @@ def measure(alazar,
     #delayBetweenPulses_step: " + str(delayBetweenPulses_step) + "\n\
     #ampReference: " + str(ampReference) + "\n\
     #decimation_value: " + str(decimation_value) + "\n\
-    #roundDelayArray: " + str(roundDelayArray) + "\n\
-    #timeToWaitForAWGUpload : " + str(timeToWaitForAWGUpload) + "\n\
     #currentResistance: " + str(currentResistance)+ "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
@@ -177,73 +172,40 @@ def measure(alazar,
         sleep(0.05)
         Voltsource.ramp_voltage(voltage)
 
-    freq = 70e6
-    periodPerPacket,awgRate,sampleSizePacket = findAwgRateAndPeriod(freq)
-    awg.set_sampleRate(awgRate)
+   # TODO I have to fix this for 2 channels
+    numberOfChannels = 1
+    periodPerPacket,awgRate,sampleSizePacket = findAwgRateAndPeriod(if_freq,numberOfChannels)
+    awgRate = awgRate/2
+    awg.set_sampleRate(awgRate*2)
 
-    nPackets = pulseMeasurementLength/periodPerPacket*freq
-    sampleSizeMeasurementPulse = int(sampleSizePacket*nPackets/512)*512
+    sampleSizeMeasurement = int(awgRate*(pulsesPeriod+delayBetweenPulses_final)/512)*512
 
-    sampleSizeExcitation = convertToSamples(awgRate,durationExcitation)
+    print('Memory allocation')
+    SCPI_sock_send(awg._session,":TRAC1:DEL:ALL")
+    SCPI_sock_send(awg._session,":TRAC2:DEL:ALL")
+    SCPI_sock_send(awg._session,":TRAC1:DEF 1,{},0".format(sampleSizeMeasurement))
+    sleep(1)
+    awg.getError()
+
+
+
+    awg.setVoltage(1,0.6)
+    awg.setVoltage(2,rf_excitation_amp)
+    awg.setVoltage(3,1)
+    awg.setVoltage(4,1)
+
+    awg.setVoltageOffset(3,0.5)
+    awg.setVoltageOffset(4,0.5)
+
+    awg.openChanneloutput(1)
+    awg.openChanneloutput(2)
+    awg.openChanneloutput(3)
+    awg.openChanneloutput(4)
 
     RFsourceMeasurement.set_amplitude(rf_measurement_amp)
     RFsourceMeasurement.set_frequency(freqMeasurement-if_freq)
     RFsourceMeasurement.start_rf()
     RFsourceMeasurement.setPulsePolarityInverted()
-
-    RFsourceExcitation.set_amplitude(rf_excitation_amp)
-    RFsourceExcitation.set_frequency(freqExcitation)
-    RFsourceExcitation.start_rf()
-    #RFsourceExcitation.setPulsePolarityInverted()
-    RFsourceExcitation.setPulsePolarityNormal()
-
-
-
-    awg.setVoltage(1,0.6)
-    awg.setVoltage(3,1)
-    awg.setVoltage(4,1)
-    awg.setVoltageOffset(3,0.5)
-    awg.setVoltageOffset(4,0.5)
-
-    for idx, delayBetweenPulses in enumerate(delays):
-        clear_output(wait=True)
-
-        awg.stop()
-        sleep(0.05)
-
-        sampleSizeMeasurement = convertToSamples(awgRate,pulsesPeriod+delayBetweenPulses+2*durationExcitation)
-        sampleSizeDelay = convertToSamples(awgRate,delayBetweenPulses)
-
-
-        awg.clearMemory()
-        awg.defineSegment(sampleSizeMeasurement)
-
-        sleep(0.05)
-
-        awg.start()
-
-        sleep(0.05)
-
-        awg.setWave(freq,1, sampleSizeDelay+2*sampleSizeExcitation, sampleSizeMeasurementPulse,awgRate)
-        sleep(timeToWaitForAWGUpload)
-
-        awg.setMarker(0,2)
-        awg.setMarker(sampleSizeExcitation,0)
-        awg.setMarker(sampleSizeDelay+sampleSizeExcitation,2)
-        awg.setMarker(sampleSizeDelay+2*sampleSizeExcitation+sampleSizeMeasurementPulse,0)
-
-        sleep(0.05)
-
-        I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
-
-        Is[idx] = I
-        Qs[idx] = Q 
-        
-        mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
-
-        
-        plt.pause(0.05)
-        plt.plot(delays*1e6,mags)
 
 
     try:
@@ -252,33 +214,25 @@ def measure(alazar,
             clear_output(wait=True)
 
             awg.stop()
-            sleep(0.05)
 
-            sampleSizeMeasurement = convertToSamples(awgRate,pulsesPeriod+delayBetweenPulses+2*durationExcitation)
-            sampleSizeDelay = convertToSamples(awgRate,delayBetweenPulses)
+            
+            _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[durationExcitation,durationExcitation],[delayBetweenPulses,0],[0,0],if_freq,freqExcitation,awgRate)
+            pulseMeasurement = addPadding(pulseMeasurement)
+            pulsesExcitation = addPadding(pulsesExcitation)
+            markers = addPadding(markers)
 
+            
 
-            awg.clearMemory()
-            awg.defineSegment(sampleSizeMeasurement)
+            withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+            awg.downloadDataToAwg(withmarker, 1,0)
+            sleep(1)
+            awg.downloadDataToAwg(pulsesExcitation, 2,0)
+            sleep(1)
 
-            sleep(0.05)
 
             awg.start()
-
             sleep(0.05)
-
-            awg.setWave(freq,1, sampleSizeDelay+2*sampleSizeExcitation, sampleSizeMeasurementPulse,awgRate)
-            sleep(timeToWaitForAWGUpload)
-
-            awg.setMarker(0,2)
-            awg.setMarker(sampleSizeExcitation,0)
-            awg.setMarker(sampleSizeDelay+sampleSizeExcitation,2)
-            awg.setMarker(sampleSizeDelay+2*sampleSizeExcitation+sampleSizeMeasurementPulse,0)
-
-            sleep(0.05)
-
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
-
             Is[idx] = I
             Qs[idx] = Q 
             
@@ -300,10 +254,12 @@ def measure(alazar,
             # fig.canvas.flush_events()
 
 
-        
-        RFsourceExcitation.stop_rf()        
+           
         RFsourceMeasurement.stop_rf()
-        RFsourceMeasurement.setPulsePolarityNormal()
+        awg.closeChanneloutput(1)
+        awg.closeChanneloutput(2)
+        awg.closeChanneloutput(3)
+        awg.closeChanneloutput(4)
         awg.stop()
 
         if voltageSourceState:

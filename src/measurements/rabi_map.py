@@ -13,7 +13,7 @@ import sys
 from IPython.display import clear_output
 from pyvisa.errors import VisaIOError
 
-
+from instruments.pulse_generator import *
 def loadparams(filename):
 
     parameters = load(filename)
@@ -75,6 +75,7 @@ def measure(alazar,
             delayBetweenPulses,
             ampReference,
             decimation_value,
+            excitationPulseIFAmp,
             currentResistance):
     '''
      2 -> A 3 -> B
@@ -101,18 +102,14 @@ def measure(alazar,
 
     samplingRate = 1e9/decimation_value
 
-    dg.setLevelAmplitude(1,3) # Set AB to 3 Volts
-    dg.setLevelAmplitude(2,3) # Set CD to 3 Volts
-    dg.setTriggerSource(5) # Set trigger to be controlled by me
-    dg.setBurstCount(int(nBuffer*recordPerBuffers)) # set number of shots
-    dg.setBurstMode(1)  
+    awg.stop()
 
+    awg.setRefInClockFrequency(10e6)
+    awg.setRefInClockExternal()
+    awg.setDualWithMarker()
+    awg.setMemoryDivision(2)
+    awg.setChannelMemoryToExtended(2)
 
-
-    dg.setDelay(4,3,delayBetweenPulses) # C in relation to B
-    dg.setDelay(5,4,pulseMeasurementLength) # D in relation to C
-    
-    
 
     pointsPerRecord = int(pulseMeasurementLength*samplingRate/256)*256
 
@@ -121,19 +118,10 @@ def measure(alazar,
     RFsourceMeasurement.start_mod()
     RFsourceMeasurement.set_pulse_trigger_external()
 
-    RFsourceExcitation.stop_rf()
-    RFsourceExcitation.start_pulse()
-    RFsourceExcitation.start_mod()
-    RFsourceExcitation.set_pulse_trigger_external()
-
     awg.stop()
-
 
     Voltsource.ramp_voltage(0)
     Voltsource.turn_off()
-
-    awg.setCWFrequency(if_freq)
-
 
     timeDurationExcitations = np.arange(pulseExcitationLength_init,pulseExcitationLength_final,pulseExcitationLength_step)
     qubit_freqs = np.arange(rabi_map_qfreq_init,rabi_map_qfreq_final, rabi_map_qfreq_step)
@@ -205,24 +193,66 @@ def measure(alazar,
         sleep(0.05)
         Voltsource.ramp_voltage(voltage)
 
+    # TODO I have to fix this for 2 channels
+    numberOfChannels = 1
+    periodPerPacket,awgRate,sampleSizePacket = findAwgRateAndPeriod(if_freq,numberOfChannels)
+    awgRate = awgRate/2
+    awg.set_sampleRate(awgRate*2)
+
+    sampleSizeMeasurement = int(awgRate*pulsesPeriod/512)*512
+
+    print('Memory allocation')
+    SCPI_sock_send(awg._session,":TRAC1:DEL:ALL")
+    SCPI_sock_send(awg._session,":TRAC2:DEL:ALL")
+    SCPI_sock_send(awg._session,":TRAC1:DEF 1,{},0".format(sampleSizeMeasurement))
+    sleep(1)
+    awg.getError()
+
+
+
+    awg.setVoltage(1,0.6)
+    awg.setVoltage(2,excitationPulseIFAmp)
+    awg.setVoltage(3,1)
+    awg.setVoltage(4,1)
+
+    awg.setVoltageOffset(3,0.5)
+    awg.setVoltageOffset(4,0.5)
+
+    awg.openChanneloutput(1)
+    awg.openChanneloutput(2)
+    awg.openChanneloutput(3)
+    awg.openChanneloutput(4)
+
     RFsourceMeasurement.set_amplitude(rf_measurement_amp)
     RFsourceMeasurement.set_frequency(freqMeasurement-if_freq)
     RFsourceMeasurement.start_rf()
+    RFsourceMeasurement.setPulsePolarityInverted()
 
-    RFsourceExcitation.set_amplitude(rf_excitation_amp)
+
+    # A first long pulse to see if it works
+    _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[1e-6],[delayBetweenPulses],[0],if_freq,qubit_freqs[0],awgRate)
+    pulseMeasurement = addPadding(pulseMeasurement)
+    pulsesExcitation = addPadding(pulsesExcitation)
+    markers = addPadding(markers)
+
     
-    RFsourceExcitation.start_rf()
+    withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+    awg.downloadDataToAwg(withmarker, 1,0)
+    sleep(1)
+    awg.downloadDataToAwg(pulsesExcitation, 2,0)
+    sleep(1)
+
+
     awg.start()
     sleep(0.05)
+    I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
+
 
 
     try:
 
         for idx_qfreq, qfreq in enumerate(qubit_freqs):
-        
-            RFsourceExcitation.set_frequency(qfreq)
-            sleep(0.05)
-            
+         
             Z = Is+Qs*1j
 
             np.savez(name,header=howtoplot,qubit_freqs=qubit_freqs,duration=timeDurationExcitations,Z=Z)
@@ -231,13 +261,28 @@ def measure(alazar,
 
             sleep(0.05)
             for idx, duration in enumerate(timeDurationExcitations):
-                clear_output(wait=True)
+                clear_output(wait=True) 
 
-                dg.setDelay(3,2,duration) # B in relation to A
-                dg.setBurstPeriod(pulsesPeriod+duration) # set period between shots
-                sleep(0.05)
+                awg.stop()
 
-                I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
+                
+                _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[duration],[delayBetweenPulses],[0],if_freq,qfreq,awgRate)
+                pulseMeasurement = addPadding(pulseMeasurement)
+                pulsesExcitation = addPadding(pulsesExcitation)
+                markers = addPadding(markers)
+
+                
+        
+                withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+                awg.downloadDataToAwg(withmarker, 1,0)
+                sleep(1)
+                awg.downloadDataToAwg(pulsesExcitation, 2,0)
+                sleep(1)
+    
+
+                awg.start()
+
+                I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value, triggerLevel_volts=0.7, triggerRange_volts=1,TTL=True)
                 Is[idx_qfreq,idx] = I
                 Qs[idx_qfreq,idx] = Q 
                 
@@ -254,7 +299,10 @@ def measure(alazar,
                 # fig.canvas.flush_events()
 
 
-        RFsourceExcitation.stop_rf()
+        awg.closeChanneloutput(1)
+        awg.closeChanneloutput(2)
+        awg.closeChanneloutput(3)
+        awg.closeChanneloutput(4)
         RFsourceMeasurement.stop_rf()
         awg.stop()
 

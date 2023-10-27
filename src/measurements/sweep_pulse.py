@@ -63,6 +63,10 @@ def measure(alazar,
             if_freq,
             qubitname,
             voltageSourceState,
+            excitationState,
+            excitationDuration,
+            excitationAmplitude,
+            excitationFrequency,
             nBuffer,
             recordPerBuffers,
             waveformHeadCut,
@@ -127,6 +131,10 @@ def measure(alazar,
     #ampReference: " + str(ampReference) + "\n\
     #decimation_value:" + str(decimation_value) + "\n\
     #currentResistance:" + str(currentResistance) + "\n\
+    #excitationState: " + str(excitationState) + "\n\
+    #excitationDuration: " + str(excitationDuration) + "\n\
+    #excitationAmplitude:" + str(excitationAmplitude) + "\n\
+    #excitationFrequency:" + str(excitationFrequency) + "\n\
     #HOW TO PLOT\n\
     data = np.load('"+name+".npz')\n\
     freqs = data['freqs']\n\
@@ -162,11 +170,6 @@ def measure(alazar,
     awgRate = awgRate/2
     awg.set_sampleRate(awgRate*2)
 
-    _,pulseMeasurement,markers = prepareMeasurementSignalData(pulseMeasurementLength,if_freq,awgRate)
-
-    pulseMeasurement = addPadding(pulseMeasurement)
-    markers = addPadding(markers)
-
     sampleSizeMeasurement = int(awgRate*pulsesPeriod/512)*512
 
     print('Memory allocation')
@@ -176,12 +179,37 @@ def measure(alazar,
     sleep(1)
     awg.getError()
 
+    print(excitationState)
+    if excitationState:
+        print('excitation on')
+        _,pulseMeasurement,pulsesExcitation,markers = prepareSignalData(pulseMeasurementLength,[excitationDuration],[0],[0],if_freq,excitationFrequency,awgRate)
+        pulseMeasurement = addPadding(pulseMeasurement)
+        pulsesExcitation = addPadding(pulsesExcitation)
+        markers = addPadding(markers)
 
-    print("Downloading data to awg")
-    withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
-    awg.downloadDataToAwg(withmarker, 1,0)
-    sleep(1)
-    awg.getError()
+        withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+        awg.downloadDataToAwg(withmarker, 1,0)
+        sleep(1)
+        awg.downloadDataToAwg(pulsesExcitation, 2,0)
+        sleep(1)
+
+        awg.setVoltage(2,excitationAmplitude)
+        awg.openChanneloutput(2)    
+    else:
+        print('excitation off')
+        _,pulseMeasurement,markers = prepareMeasurementSignalData(pulseMeasurementLength,if_freq,awgRate)
+
+        pulseMeasurement = addPadding(pulseMeasurement)
+        markers = addPadding(markers)
+
+
+
+
+        print("Downloading data to awg")
+        withmarker = np.array(tuple(zip(pulseMeasurement,markers))).flatten()
+        awg.downloadDataToAwg(withmarker, 1,0)
+        sleep(1)
+        awg.getError()
 
     awg.setVoltage(1,0.6)
     awg.setVoltage(3,1)
@@ -191,6 +219,7 @@ def measure(alazar,
     awg.setVoltageOffset(4,0.5)
 
     awg.openChanneloutput(1)
+
     awg.openChanneloutput(3)
     awg.openChanneloutput(4)
 
@@ -227,6 +256,7 @@ def measure(alazar,
 
 
         awg.closeChanneloutput(1)
+        awg.closeChanneloutput(2)
         awg.closeChanneloutput(3)
         awg.closeChanneloutput(4)
         RFsourceMeasurement.stop_rf()
