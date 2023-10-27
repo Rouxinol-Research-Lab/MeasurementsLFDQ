@@ -20,6 +20,14 @@ class E5063A_driver(VisaInstrument):
     def scale(self,trace_idx,value):
         self.write(':DISP:WIND:TRAC'+str(trace_idx)+':Y:PDIV '+str(value))
 
+    def set_amplitude(self,amp):
+        '''Set amplitude power in dBm'''
+
+        if amp > 0 or amp < -20:
+            raise ValueError("amp must be below or equal to 0 dBm and above or equal to -20 dBm")
+
+        self.write(':SOUR1:POWER {}'.format(amp))
+
     @property
     def sweep_time(self):
         '''This command gets the sweep time.
