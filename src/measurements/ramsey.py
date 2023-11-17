@@ -101,6 +101,9 @@ def measure(alazar,
 
     awg.stop()
 
+    awg.setRefInClockFrequency(10e6)
+    awg.setRefInClockExternal()  
+
     awg.setSingleWithMarker()
     #awg.setDualWithMarker()
     SCPI_sock_send(awg._session, ':INST:MEM:EXT:RDIV DIV1')
@@ -190,6 +193,7 @@ def measure(alazar,
     RFsourceMeasurement.set_frequency(freqMeasurement-if_freq)
     RFsourceMeasurement.start_rf()
     RFsourceMeasurement.setPulsePolarityInverted()
+    
 
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
     RFsourceExcitation.set_frequency(freqExcitation)
@@ -204,6 +208,10 @@ def measure(alazar,
     awg.setVoltage(4,1)
     awg.setVoltageOffset(3,0.5)
     awg.setVoltageOffset(4,0.5)
+
+    awg.openChanneloutput(1)
+    awg.openChanneloutput(3)
+    awg.openChanneloutput(4)
 
     for idx, delayBetweenPulses in enumerate(delays):
         clear_output(wait=True)
@@ -299,7 +307,9 @@ def measure(alazar,
             # fig.canvas.draw()
             # fig.canvas.flush_events()
 
-
+        awg.closeChanneloutput(1)
+        awg.closeChanneloutput(3)
+        awg.closeChanneloutput(4)
         
         RFsourceExcitation.stop_rf()        
         RFsourceMeasurement.stop_rf()

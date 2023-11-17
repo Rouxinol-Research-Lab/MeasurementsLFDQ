@@ -22,7 +22,7 @@ def loadparams(filename):
     awg = M8195A_driver(parameters['awg_address'])
     dg = DG645_driver(parameters['delay_generator_address'])
     att = Agilent11713C_driver(parameters['att_address'])
-    RFsource = E8257D_driver(parameters['RFsource_address'])
+    RFsourceMeasurement = E8257D_driver(parameters['RFsourceMeasurement_address'])
 
     port = parameters['Voltage_Source_port']
     current_step_time =  parameters['current_step_time']
@@ -43,29 +43,35 @@ def loadparams(filename):
     voltage = parameters['Voltage_Source_voltage']
 
 
-    return alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
+    return alazar,awg, dg,att,RFsourceMeasurement,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState
 
 
 def measure(alazar,
-            awg,
+            awg, 
             dg,
             att,
-            RFsource,
+            RFsourceMeasurement,
+            RFsourceExcitation,
             Voltsource,
             voltage,
             rf_amp,
-            attenuator_att,
+            attenuator_att, 
             center_freq,
             span_freq,
-            step_freq,
+            step_freq, 
             if_freq,
             qubitname,
             voltageSourceState,
-            nBuffer,
-            recordPerBuffers,
+            rfExcitationState,
+            RFExcitationFreq,
+            RFExcitationAmp,
+            RFExcitationLength,
+            nBuffer, 
+            recordPerBuffers, 
             waveformHeadCut,
             pulsesPeriod,
             pulseMeasurementLength,
+            delayBetweenPulses,
             ampReference,
             decimation_value,
             currentResistance):
@@ -79,16 +85,24 @@ def measure(alazar,
     dg.setBurstPeriod(pulsesPeriod) # set period between shots
     dg.setBurstMode(1)
 
-    dg.setDelay(3,2,0) # B in relation to A
-    dg.setDelay(4,2,0) # C in relation to A
+    dg.setDelay(3,2,RFExcitationLength) # B in relation to A
+    dg.setDelay(4,3,delayBetweenPulses) # C in relation to B
     dg.setDelay(5,4,pulseMeasurementLength) # D in relation to C
 
     pointsPerRecord = int(pulseMeasurementLength*samplingRate/256)*256
 
-    RFsource.stop_rf()
-    RFsource.start_pulse()
-    RFsource.start_mod()
-    RFsource.set_pulse_trigger_external()
+    RFsourceMeasurement.stop_rf()
+    RFsourceMeasurement.start_pulse()
+    RFsourceMeasurement.start_mod()
+    RFsourceMeasurement.set_pulse_trigger_external()
+    RFsourceMeasurement.setPulsePolarityNormal()
+
+
+    RFsourceExcitation.stop_rf()
+    RFsourceExcitation.start_pulse()
+    RFsourceExcitation.start_mod()
+    RFsourceExcitation.set_pulse_trigger_external()
+    RFsourceMeasurement.setPulsePolarityNormal()
 
     awg.stop()
 
@@ -159,9 +173,14 @@ def measure(alazar,
         sleep(0.05)
         Voltsource.ramp_voltage(voltage)
 
+
+    if rfExcitationState:
+        RFsourceExcitation.start_rf()
+        RFsourceExcitation.set_amplitude(RFExcitationAmp)
+        RFsourceExcitation.set_frequency(RFExcitationFreq)
     
-    RFsource.set_amplitude(rf_amp)
-    RFsource.start_rf()
+    RFsourceMeasurement.set_amplitude(rf_amp)
+    RFsourceMeasurement.start_rf()
     awg.start()
     sleep(0.05)
 
@@ -170,7 +189,7 @@ def measure(alazar,
 
         for idx, freq in enumerate(freqs):
             clear_output(wait=True)
-            RFsource.set_frequency(freq-if_freq)
+            RFsourceMeasurement.set_frequency(freq-if_freq)
             sleep(0.05)
             I,Q = alazar.capture(0,pointsPerRecord,nBuffer,recordPerBuffers,ampReference,save=False,waveformHeadCut=waveformHeadCut, decimation_value = decimation_value)
             Is[idx] = I
@@ -190,7 +209,8 @@ def measure(alazar,
             # fig.canvas.flush_events()
 
 
-        RFsource.stop_rf()
+        RFsourceMeasurement.stop_rf()
+        RFsourceExcitation.stop_rf()
         awg.stop()
 
         if voltageSourceState:
@@ -236,9 +256,9 @@ def main():
     filename = args[2]
 
     if command == "measure":
-        alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState = loadparams(filename)
+        alazar,awg, dg,att,RFsourceMeasurement,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState = loadparams(filename)
 
-        name = measure(alazar,awg, dg,att,RFsource,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState)
+        name = measure(alazar,awg, dg,att,RFsourceMeasurement,Voltsource,voltage,rf_amp,attenuator_att, center_freq,span_freq,step_freq,if_freq, qubitname,voltageSourceState)
         
         print(name)
     elif command == "plot":

@@ -139,8 +139,8 @@ def measure(alazar,
     Is = np.ndarray(len(timeDurationExcitations))
     Qs = np.ndarray(len(timeDurationExcitations))
 
-    Is[:] = 10**(-45/20)
-    Qs[:] = 10**(-45/20)
+    Is[:] = 10**(-55/20)
+    Qs[:] = 10**(-55/20)
 
 
 
@@ -201,10 +201,14 @@ def measure(alazar,
     RFsourceMeasurement.set_amplitude(rf_measurement_amp)
     RFsourceMeasurement.set_frequency(freqMeasurement-if_freq)
     RFsourceMeasurement.start_rf()
+    RFsourceExcitation.set_pulse_trigger_external()
+    RFsourceMeasurement.setPulsePolarityNormal()
 
     RFsourceExcitation.set_amplitude(rf_excitation_amp)
     RFsourceExcitation.set_frequency(freqExcitation)
     RFsourceExcitation.start_rf()
+    RFsourceExcitation.set_pulse_trigger_external()
+    RFsourceMeasurement.setPulsePolarityNormal()
     awg.start()
     sleep(0.05)
 

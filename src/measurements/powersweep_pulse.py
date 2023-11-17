@@ -91,6 +91,7 @@ def measure(alazar,
     RFsource.start_pulse()
     RFsource.start_mod()
     RFsource.set_pulse_trigger_external()
+    RFsource.setPulsePolarityNormal()
 
     awg.stop()
 
