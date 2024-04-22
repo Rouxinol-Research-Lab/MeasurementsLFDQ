@@ -141,8 +141,8 @@ def measure(alazar,
     Is = np.ndarray(len(qubitfreqs))
     Qs = np.ndarray(len(qubitfreqs))
 
-    Is[:] = 10**(-45/20)
-    Qs[:] = 10**(-45/20)
+    Is[:] = 1e-6
+    Qs[:] = 1e-6
 
 
 

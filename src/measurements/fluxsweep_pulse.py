@@ -69,7 +69,8 @@ def measure(alazar,
             pulseLength,
             ampReference,
             currentResistance,
-            decimation_value):
+            decimation_value,
+            list_voltages = np.array([])):
     typename = "fluxsweep_pulse"
 
     samplingRate = 1e9/decimation_value
@@ -98,15 +99,17 @@ def measure(alazar,
     awg.setCWFrequency(if_freq)
 
 
-
-    voltages = np.arange(voltage_init,voltage_final,voltage_step)
+    voltages = list_voltages
+    if not list_voltages.any():
+        voltages = np.arange(voltage_init,voltage_final,voltage_step)
+    
     freqs = np.arange(center_freq-span_freq/2,center_freq+span_freq/2,step_freq)
 
     Is = np.ndarray((len(voltages),len(freqs)))
     Qs = np.ndarray((len(voltages),len(freqs)))
 
-    Is[:] = 1
-    Qs[:] = 1
+    Is[:] = 1e-6
+    Qs[:] = 1e-6
 
 
 
