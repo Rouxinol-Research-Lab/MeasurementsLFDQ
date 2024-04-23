@@ -7,7 +7,7 @@ class Pulse:
         This class defines a pulse to be sent to the AWG.
     '''
 
-    def __init__(self, length, amplitude, frequency, phase, envelope = 'square', tau = 0.2, sigma = 0.20, nsteps = 0.05e-9):
+    def __init__(self, length, amplitude, frequency, phase, envelope = 'square', tau = 0.2, sigma = 0.20):
         self.length = length
         self.phase = phase/180*pi
         self.amplitude = amplitude
@@ -15,15 +15,9 @@ class Pulse:
         self.envelope = envelope
         self.tau = tau
         self.sigma = sigma
-        self.divisions = nsteps
 
-        t, pulse = self.build()
-
-        self.t = t
-        self.pulse = pulse
-
-    def build(self):
-        t = arange(0, self.length, self.divisions)
+    def build(self, nsteps):
+        t = arange(0, self.length, nsteps)
         pulse = self.amplitude*sin(2*pi*self.frequency*t+self.phase)
 
         if self.envelope.lower() == 'gaussian':
@@ -33,8 +27,9 @@ class Pulse:
 
         return t, pulse
     
-    def show(self):
-        plot(self.t, self.pulse)
+    def show(self, timestep = 0.01e-9):
+        t, pulse = self.build(timestep)
+        plot(t, pulse)
         show()
     
 
