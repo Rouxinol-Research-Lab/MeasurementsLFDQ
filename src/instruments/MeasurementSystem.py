@@ -32,9 +32,8 @@ class MeasurementSystem:
 
     def allocAwgMemory(self,awgRate):
         totalExperimentLength = self.parameters.relaxationDelay + sequence.get_totallength() + self.parameters.startup_delay
-
-        
-        SCPI_sock_send(self.instruments.awg._session,":TRAC1:DEF 1,{},0".format(totalExperimentLength))    
+        awgByteSizeMeasurement = int(totalExperimentLength*awgRate/512)*512
+        SCPI_sock_send(self.instruments.awg._session,":TRAC1:DEF 1,{},0".format(awgByteSizeMeasurement))    
 
     def getDataFromSocketBinary(self):
         dat = b''
