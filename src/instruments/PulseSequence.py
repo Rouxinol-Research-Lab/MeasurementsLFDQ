@@ -20,23 +20,32 @@ class PulseSequence:
         else:
             raise TypeError('p should type Pulse.')
 
-    def build(self, timestep):
-        
+    def get_totallength(self):
         totallength = np.sum(self.list_of_delays)
         for p in self.list_of_pulses:
             totallength += p.length
+
+        return totallength
+    
+    def build(self, timestep):
+        
+        totallength = self.get_totallength()
         
         t = arange(0,totallength,timestep)
         sequence = ndarray(len(t))
 
+        initial_time = 0
         idx = 0
         for (p,d) in zip(self.list_of_pulses,self.list_of_delays):
-            tp, wavep = p.build(timestep)
+            idx = int(initial_time/timestep)
+            tp, wavep = p.build(timestep,initial_time)
             
             length_p = len(wavep)
-            sequence[idx:idx+length_p] = wavep
-            idx += length_p + int(d/timestep) # the length of the pulse plus the total delay steps
 
+            sequence[idx:idx+length_p] = wavep
+
+            initial_time += p.length + d
+            
         return t,sequence
 
     def set_delay(self,i,delay):
