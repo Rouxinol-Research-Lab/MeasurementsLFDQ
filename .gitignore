@@ -5,3 +5,4 @@ __pycache__
 Instruments.py
 src/Instruments/AlazarMeasurer.dll
 /.vs
+.ipynb_checkpoints/

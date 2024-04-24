@@ -4,11 +4,11 @@ import copy
 
 from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8
 
-class Parameter:
+class Parameters:
     def __init__(self):
         super().__init__()
         
-class Instrument:
+class Instruments:
     def __init__(self):
         super().__init__()
         
@@ -17,14 +17,46 @@ class MeasurementSystem:
     def __init__(self, name):
         self.name = name
         self.awgChannels = []
-        self.parameters = Parameter()
-        self.instruments = Instrument()
+        self.parameters = Parameters()
+        self.instruments = Instruments()
 
     def connectToAwgChannel(self, channel, label, freq):
         self.awgChannels.append((channel,label, freq))
 
     def clearAwgChannel(self):
         self.awgChannels = []
+
+    def clearAwgMemory(self):
+        SCPI_sock_send(self.instruments.awg._session,":TRAC1:DEL:ALL")
+        SCPI_sock_send(self.instruments.awg._session,":TRAC2:DEL:ALL")
+
+    def allocAwgMemory(self,awgRate):
+        totalExperimentLength = self.parameters.relaxationDelay + sequence.get_totallength() + self.parameters.startup_delay
+
+        
+        SCPI_sock_send(self.instruments.awg._session,":TRAC1:DEF 1,{},0".format(totalExperimentLength))    
+
+    def getDataFromSocketBinary(self):
+        dat = b''
+        while 1:
+            message = self.instruments.awg._session.recv(4096)
+            last=len(message)
+            if chr(message[-1]) == "\n":
+                dat=dat+message[:-1]
+                return dat
+            else:
+                dat=dat+message
+    
+    def getIEEEBlockTag(self,data):
+        dataSize = len(data)
+        numberLength =  int(np.log10(dataSize)+1)
+        return "#{}{}".format(numberLength,dataSize)
+    
+    def downloadDataToAwg(self,data,channel,offset):
+        tag = getIEEEBlockTag(data)
+        cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
+        self.instruments.awg._session.sendall(cmd.encode()+bytes(data)+"\n".encode())    
+
     
     def prepareSignalData(self,
                           sequence,
@@ -89,10 +121,13 @@ class MeasurementSystem:
                     all_pulses[channelName].append({
                         "awgChannel" : awgChannel,
                         "pulse_stream" : wave,
+                        "length" : p.length,
                         "frequency" : original_freq-if_freq,
                         "if_freq"   : if_freq,
                         "start_time" : initial_index
                     })
+
+                    del p
     
                     #all_pulses[c][initial_index : initial_index + len(wave)] = wave
     

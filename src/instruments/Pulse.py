@@ -34,26 +34,4 @@ class Pulse:
     
 
 
-def getDataFromSocketBinary(session):
-    dat = b''
-    while 1:
-        message = session.recv(4096)
-        last=len(message)
-        if chr(message[-1]) == "\n":
-            dat=dat+message[:-1]
-            return dat
-        else:
-            dat=dat+message
-
-def getIEEEBlockTag(data):
-    dataSize = len(data)
-    numberLength =  int(np.log10(dataSize)+1)
-    return "#{}{}".format(numberLength,dataSize)
-
-def downloadDataToAwg(data,channel,offset):
-    tag = getIEEEBlockTag(data)
-    cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
-    awg._session.sendall(cmd.encode()+bytes(data)+"\n".encode())    
-
-
 # Define a function to prepare signal data for a waveform
