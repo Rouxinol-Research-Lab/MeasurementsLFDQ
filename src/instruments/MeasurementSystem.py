@@ -1,5 +1,6 @@
 from instruments.Pulse import Pulse
 from instruments.PulseSequence import PulseSequence
+import copy
 
 from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8
 
@@ -19,9 +20,12 @@ class MeasurementSystem:
         self.parameters = Parameter()
         self.instruments = Instrument()
 
-    def connectToAwgChannel(self, channel, label):
-        self.awgChannels.append((channel,label))
+    def connectToAwgChannel(self, channel, label, freq):
+        self.awgChannels.append((channel,label, freq))
 
+    def clearAwgChannel(self):
+        self.awgChannels = []
+    
     def prepareSignalData(self,
                           sequence,
                           awgRate):
@@ -63,24 +67,36 @@ class MeasurementSystem:
 
         all_pulses = {}
 
-        for (awgChannel, channelName) in self.awgChannels:
+        for (awgChannel, channelName, if_freq) in self.awgChannels:
 
-            all_pulses[channelName] = zeros(size, dtype= int8)
+            #all_pulses[channelName] = zeros(size, dtype= int8)
+            all_pulses[channelName] = []
             
             delay = 0
             for idx,pulseChannel in enumerate(sequence.list_of_channels):
                 c = channelName.lower()
                 if pulseChannel.lower() == c:
-                    p = sequence.list_of_pulses[idx]
+                    p = copy.deepcopy(sequence.list_of_pulses[idx])
+                    original_freq = p.frequency
+                    #p = sequence.list_of_pulses[idx]
+                    p.frequency = if_freq
                     initial_index = int(delay*awgRate)
     
                     p_t, p_wave = p.build(1/awgRate,delay)
     
                     wave = array(bytes_amplitude*p_wave, dtype = int8)
+
+                    all_pulses[channelName].append({
+                        "awgChannel" : awgChannel,
+                        "pulse_stream" : wave,
+                        "frequency" : original_freq-if_freq,
+                        "if_freq"   : if_freq,
+                        "start_time" : initial_index
+                    })
     
-                    all_pulses[c][initial_index : initial_index + len(wave)] = wave
+                    #all_pulses[c][initial_index : initial_index + len(wave)] = wave
     
                 delay += sequence.list_of_delays[idx] + sequence.list_of_pulses[idx].length
 
 
-        return x, all_pulses
+        return all_pulses
