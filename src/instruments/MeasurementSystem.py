@@ -20,8 +20,8 @@ class MeasurementSystem:
         self.parameters = Parameters()
         self.instruments = Instruments()
 
-    def connectToAwgChannel(self, channel, label, freq):
-        self.awgChannels.append((channel,label, freq))
+    def connectToAwgChannel(self, channel, label, freq, markers = False):
+        self.awgChannels.append((channel,label, freq, markers))
 
     def clearAwgChannel(self):
         self.awgChannels = []
@@ -98,7 +98,7 @@ class MeasurementSystem:
 
         all_pulses = {}
 
-        for (awgChannel, channelName, if_freq) in self.awgChannels:
+        for (awgChannel, channelName, if_freq, markers) in self.awgChannels:
 
             #all_pulses[channelName] = zeros(size, dtype= int8)
             all_pulses[channelName] = []
@@ -120,6 +120,11 @@ class MeasurementSystem:
                     # total wave size must be multiples of 512
                     addedZerosLength = len(wave)%512
                     wave = append(wave, zeros(512-addedZerosLength, dtype = int8))
+
+                    if markers:
+                        themarkers = 3*ones(len(wave), dtype=int8) 
+                        themarkers[-1] = 0
+                        wave = array(tuple(zip(wave,themarkers))).flatten()
 
                     all_pulses[channelName].append({
                         "awgChannel" : awgChannel,
