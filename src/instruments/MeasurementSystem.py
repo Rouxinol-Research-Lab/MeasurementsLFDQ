@@ -53,7 +53,7 @@ class MeasurementSystem:
         return "#{}{}".format(numberLength,dataSize)
     
     def loadDataToAwg(self,data,channel,offset):
-        tag = getIEEEBlockTag(data)
+        tag = self.getIEEEBlockTag(data)
         cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
         self.instruments.awg._session.sendall(cmd.encode()+bytes(data)+"\n".encode())    
 
