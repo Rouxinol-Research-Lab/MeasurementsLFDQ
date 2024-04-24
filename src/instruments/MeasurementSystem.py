@@ -2,7 +2,7 @@ from instruments.Pulse import Pulse
 from instruments.PulseSequence import PulseSequence
 import copy
 
-from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8
+from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8,append
 
 class Parameters:
     def __init__(self):
@@ -103,7 +103,7 @@ class MeasurementSystem:
             #all_pulses[channelName] = zeros(size, dtype= int8)
             all_pulses[channelName] = []
             
-            delay = 0
+            delay = self.parameters.startup_delay
             for idx,pulseChannel in enumerate(sequence.list_of_channels):
                 c = channelName.lower()
                 if pulseChannel.lower() == c:
@@ -117,13 +117,17 @@ class MeasurementSystem:
     
                     wave = array(bytes_amplitude*p_wave, dtype = int8)
 
+                    # total wave size must be multiples of 512
+                    addedZerosLength = len(wave)%512
+                    wave = append(wave, zeros(512-addedZerosLength, dtype = int8))
+
                     all_pulses[channelName].append({
                         "awgChannel" : awgChannel,
                         "pulse_stream" : wave,
-                        "length" : p.length,
+                        "length" : len(wave),
                         "frequency" : original_freq-if_freq,
                         "if_freq"   : if_freq,
-                        "start_time" : initial_index
+                        "start_time" : int(initial_index/512)*512 # it must be multiples of 512
                     })
 
                     del p
