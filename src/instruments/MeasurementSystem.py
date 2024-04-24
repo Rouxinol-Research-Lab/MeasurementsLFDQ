@@ -1,6 +1,7 @@
 from instruments.Pulse import Pulse
 from instruments.PulseSequence import PulseSequence
 import copy
+from time import sleep
 
 from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8,append
 
@@ -51,11 +52,16 @@ class MeasurementSystem:
         numberLength =  int(np.log10(dataSize)+1)
         return "#{}{}".format(numberLength,dataSize)
     
-    def downloadDataToAwg(self,data,channel,offset):
+    def loadDataToAwg(self,data,channel,offset):
         tag = getIEEEBlockTag(data)
         cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
         self.instruments.awg._session.sendall(cmd.encode()+bytes(data)+"\n".encode())    
 
+    def loadPulsestoAwg(self, pulses, waittime = 0.1):
+        for (awgChannel, channelName, _, _) in self.awgChannels:
+            for p in pulses[channelName]:
+                self.loadDataToAwg(p['pulse_stream'],awgChannel,p['start_time'])
+                sleep(waittime)
     
     def prepareSignalData(self,
                           sequence,
