@@ -3,7 +3,9 @@ from instruments.PulseSequence import PulseSequence
 import copy
 from time import sleep
 
-from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8,append
+from instruments.SCPI_socket import *
+
+from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, int8,append, log10,repeat
 
 class Parameters:
     def __init__(self):
@@ -20,9 +22,32 @@ class MeasurementSystem:
         self.awgChannels = []
         self.parameters = Parameters()
         self.instruments = Instruments()
+        self.awgByteSizeMeasurement = 0
+        self.awgChannels = []
 
     def connectToAwgChannel(self, channel, label, freq, markers = False):
         self.awgChannels.append((channel,label, freq, markers))
+
+    def set_instruments_marker(self,awgRate, marker_value = 1, offset = 0):
+        '''
+        Set a position to trigger a marker
+    
+        Args:
+            marker_value (int): 0 => no marker, 
+                                1 => only marker 1, 
+                                2 => only marker 2,
+                                3 => both marker 1 and marker 2
+            offset (int): The position where to set the marker. 
+        '''
+
+        # get relative time of the first element
+        relative_time = int(abs(self.sequence.list_of_relative_delays[0]-self.parameters.startup_delay)*awgRate/128)*128+256
+        offset = self.awgByteSizeMeasurement-relative_time
+        
+        a = repeat(0,128) # awg only accepts multiples of 128
+        b = repeat(marker_value,128)
+        data = array(array(tuple(zip(a,b))).flatten(),dtype=int8)
+        self.loadDataToAwg(data,1,offset)
 
     def clearAwgChannel(self):
         self.awgChannels = []
@@ -32,9 +57,10 @@ class MeasurementSystem:
         SCPI_sock_send(self.instruments.awg._session,":TRAC2:DEL:ALL")
 
     def allocAwgMemory(self,awgRate):
-        totalExperimentLength = self.parameters.relaxationDelay + sequence.get_totallength() + self.parameters.startup_delay
-        awgByteSizeMeasurement = int(totalExperimentLength*awgRate/512)*512
-        SCPI_sock_send(self.instruments.awg._session,":TRAC1:DEF 1,{},0".format(awgByteSizeMeasurement))    
+        totalExperimentLength = self.parameters.relaxation_delay + self.sequence.get_totallength() + self.parameters.startup_delay
+        self.awgByteSizeMeasurement = int(totalExperimentLength*awgRate/128)*128
+        SCPI_sock_send(self.instruments.awg._session,":TRAC1:DEF 1,{},0".format(self.awgByteSizeMeasurement))
+        
 
     def getDataFromSocketBinary(self):
         dat = b''
@@ -49,7 +75,7 @@ class MeasurementSystem:
     
     def getIEEEBlockTag(self,data):
         dataSize = len(data)
-        numberLength =  int(np.log10(dataSize)+1)
+        numberLength =  int(log10(dataSize)+1)
         return "#{}{}".format(numberLength,dataSize)
     
     def loadDataToAwg(self,data,channel,offset):
@@ -60,7 +86,8 @@ class MeasurementSystem:
     def loadPulsestoAwg(self, pulses, waittime = 0.1):
         for (awgChannel, channelName, _, _) in self.awgChannels:
             for p in pulses[channelName]:
-                self.loadDataToAwg(p['pulse_stream'],awgChannel,p['start_time'])
+                offset = self.awgByteSizeMeasurement-p['relative_time']
+                self.loadDataToAwg(p['pulse_stream'],awgChannel,offset)
                 sleep(waittime)
     
     def prepareSignalData(self,
@@ -90,6 +117,9 @@ class MeasurementSystem:
                 - pulsesExcitation (numpy.ndarray): Array representing the excitation pulses.
                 - pulseMarkers (numpy.ndarray): Array representing the marker values.
         """
+
+        self.sequence = sequence
+        
         # Calculate the total length of the signal
         totalLength = sequence.get_totallength()
     
@@ -123,9 +153,9 @@ class MeasurementSystem:
     
                     wave = array(bytes_amplitude*p_wave, dtype = int8)
 
-                    # total wave size must be multiples of 512
-                    addedZerosLength = len(wave)%512
-                    wave = append(wave, zeros(512-addedZerosLength, dtype = int8))
+                    # total wave size must be multiples of 128
+                    addedZerosLength = len(wave)%128
+                    wave = append(zeros(128-addedZerosLength, dtype = int8),wave)
 
                     if markers:
                         themarkers = 3*ones(len(wave), dtype=int8) 
@@ -136,10 +166,11 @@ class MeasurementSystem:
                         "awgChannel" : awgChannel,
                         "pulse_stream" : wave,
                         "length" : len(wave),
-                        "frequency" : original_freq-if_freq,
                         "if_freq"   : if_freq,
-                        "start_time" : int(initial_index/512)*512 # it must be multiples of 512
+                        "start_time" : int(initial_index/128)*128, # it must be multiples of 128
+                        "relative_time" : int(abs(sequence.list_of_relative_delays[idx])*awgRate/128)*128+256
                     })
+                    all_pulses[channelName+'_frequency'] = original_freq-if_freq
 
                     del p
     
