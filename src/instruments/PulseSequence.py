@@ -1,5 +1,5 @@
 from matplotlib.pyplot import plot, show
-from numpy import sin, cos, exp, pi, arange, sqrt, array, append, ndarray
+from numpy import sin, cos, exp, pi, arange, sqrt, array, append, ndarray, invert,zeros
 import numpy as np
 from scipy.signal import convolve
 
@@ -11,14 +11,29 @@ class PulseSequence:
         self.list_of_pulses = array([])
         self.list_of_delays = array([])
         self.list_of_channels = array([])
+        self.list_of_relative_delays = array([])
 
-    def add(self, p, channel, delay = 0.0):
+    def add(self, p, channel, delay = 0.1e-9):
         if isinstance(p, Pulse):
+            relative_delay = 0
+
             self.list_of_pulses = append(self.list_of_pulses,p)
             self.list_of_delays = append(self.list_of_delays,delay)
             self.list_of_channels = append(self.list_of_channels,channel.lower())
+            self.create_relative_delays()
+            
         else:
             raise TypeError('p should type Pulse.')
+
+    # TODO
+    def create_relative_delays(self):
+        list_pulse_length = []
+        for a_p, a_d in zip(self.list_of_pulses,self.list_of_delays):
+            list_pulse_length.append(a_p.length + a_d)
+
+        self.list_of_relative_delays = zeros(len(list_pulse_length))
+        for idx,_ in enumerate(self.list_of_pulses):
+            self.list_of_relative_delays[idx] = -sum(list_pulse_length[idx:])
 
     def get_totallength(self):
         totallength = np.sum(self.list_of_delays)
@@ -54,6 +69,8 @@ class PulseSequence:
     def clear(self):
         self.list_of_pulses = array([])
         self.list_of_delays = array([])
+        self.list_of_channels = array([])
+        self.list_of_relative_delays = array([])
 
     def show(self, timestep = 0.01e-9):
         t,sequence = self.build(timestep)
