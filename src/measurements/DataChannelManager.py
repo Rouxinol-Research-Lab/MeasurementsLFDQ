@@ -1,5 +1,5 @@
-from instruments.Pulse import Pulse
-from instruments.PulseSequence import PulseSequence
+from measurements.Pulse import Pulse
+from measurements.PulseSequence import PulseSequence
 import copy
 from time import sleep
 

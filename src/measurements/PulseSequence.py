@@ -3,7 +3,7 @@ from numpy import sin, cos, exp, pi, arange, sqrt, array, append, ndarray, inver
 import numpy as np
 from scipy.signal import convolve
 
-from instruments.Pulse import Pulse
+from measurements.Pulse import Pulse
 
 class PulseSequence:
     def __init__(self, name):
