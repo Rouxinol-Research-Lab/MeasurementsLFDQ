@@ -25,8 +25,8 @@ class MeasurementSystem:
         self.awgByteSizeMeasurement = 0
         self.awgChannels = []
 
-    def connectToAwgChannel(self, channel, label, freq, markers = False):
-        self.awgChannels.append((channel,label, freq, markers))
+    def connectToAwgChannel(self, channel, channelName, freq, markers = False):
+        self.awgChannels.append((channel,channelName.lower(), freq, markers))
 
     def set_instruments_marker(self,awgRate, marker_value = 1, offset = 0):
         '''
@@ -41,8 +41,8 @@ class MeasurementSystem:
         '''
 
         # get relative time of the first element
-        relative_time = int(abs(self.sequence.list_of_relative_delays[0]-self.parameters.startup_delay)*awgRate/128)*128+256
-        offset = self.awgByteSizeMeasurement-relative_time
+        relative_memory_index = int(abs(self.sequence.list_of_relative_delays[0]-self.parameters.startup_delay)*awgRate/128)*128+256
+        offset = self.awgByteSizeMeasurement-relative_memory_index
         
         a = repeat(0,128) # awg only accepts multiples of 128
         b = repeat(marker_value,128)
@@ -83,12 +83,11 @@ class MeasurementSystem:
         cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
         self.instruments.awg._session.sendall(cmd.encode()+bytes(data)+"\n".encode())    
 
-    def loadPulsestoAwg(self, pulses, waittime = 0.1):
-        for (awgChannel, channelName, _, _) in self.awgChannels:
-            for p in pulses[channelName]:
-                offset = self.awgByteSizeMeasurement-p['relative_time']
-                self.loadDataToAwg(p['pulse_stream'],awgChannel,offset)
-                sleep(waittime)
+    def loadChannelDataToAwg(self, channelData, channelName, waittime = 0.1):
+        p = channelData[channelName]
+        offset = self.awgByteSizeMeasurement-p['relative_memory_index']
+        self.loadDataToAwg(p['pulse_stream'],p['awgChannel'],offset)
+        sleep(waittime)
     
     def prepareSignalData(self,
                           sequence,
@@ -119,16 +118,6 @@ class MeasurementSystem:
         """
 
         self.sequence = sequence
-        
-        # Calculate the total length of the signal
-        totalLength = sequence.get_totallength()
-    
-        # Create the time array
-        x = arange(0, totalLength, 1/awgRate)
-    
-        # Initialize arrays for the excitation pulses, measurement pulse, and markers
-        size = len(x)
-        pulses = zeros(size, dtype= int8)
 
         bytes_amplitude = 127
 
@@ -139,44 +128,70 @@ class MeasurementSystem:
             #all_pulses[channelName] = zeros(size, dtype= int8)
             all_pulses[channelName] = []
             
-            delay = self.parameters.startup_delay
-            for idx,pulseChannel in enumerate(sequence.list_of_channels):
-                c = channelName.lower()
-                if pulseChannel.lower() == c:
-                    p = copy.deepcopy(sequence.list_of_pulses[idx])
-                    original_freq = p.frequency
-                    #p = sequence.list_of_pulses[idx]
+            # check where to start and where to end
+            idx_start = 0
+            idx_end = 0
+
+            for idx,c in enumerate(sequence.list_of_channels):
+                if c == channelName:
+                    idx_start = idx
+                    break
+
+            # in reverse order
+            for idx,c in enumerate(reversed(sequence.list_of_channels)):
+                if c == channelName:
+                    idx_end = len(sequence.list_of_channels)-idx
+                    break
+
+            
+            delay = 0
+            totallength = sum(sequence.list_of_delays[idx_start:idx_end])
+            for p in sequence.list_of_pulses[idx_start:idx_end]:
+                totallength += p.length
+
+
+            wave_data_size = int(totallength*awgRate)
+            this_channel_wave_data = zeros(wave_data_size,dtype=int8)
+
+            for idx in range(idx_start,idx_end):
+                pulse = sequence.list_of_pulses[idx]
+
+                if channelName == sequence.list_of_channels[idx]:
+                    p = copy.deepcopy(pulse)
                     p.frequency = if_freq
-                    initial_index = int(delay*awgRate)
-    
-                    p_t, p_wave = p.build(1/awgRate,delay)
-    
-                    wave = array(bytes_amplitude*p_wave, dtype = int8)
+                    _, p_wave = p.build(1/awgRate,delay)
 
-                    # total wave size must be multiples of 128
-                    addedZerosLength = len(wave)%128
-                    wave = append(zeros(128-addedZerosLength, dtype = int8),wave)
+                    data = array(bytes_amplitude*p_wave, dtype = int8)
 
-                    if markers:
-                        themarkers = 3*ones(len(wave), dtype=int8) 
-                        themarkers[-1] = 0
-                        wave = array(tuple(zip(wave,themarkers))).flatten()
+                    i = int(delay*awgRate)
 
-                    all_pulses[channelName].append({
-                        "awgChannel" : awgChannel,
-                        "pulse_stream" : wave,
-                        "length" : len(wave),
-                        "if_freq"   : if_freq,
-                        "start_time" : int(initial_index/128)*128, # it must be multiples of 128
-                        "relative_time" : int(abs(sequence.list_of_relative_delays[idx])*awgRate/128)*128+256
-                    })
-                    all_pulses[channelName+'_frequency'] = original_freq-if_freq
+                    this_channel_wave_data.flat[i:i+len(data)] = data  
 
-                    del p
+                delay += sequence.list_of_delays[idx] + pulse.length
+
+            # total wave size must be multiples of 128
+            addedZerosLength = len(this_channel_wave_data)%128
+            this_channel_wave_data = append(zeros(128-addedZerosLength, dtype = int8),this_channel_wave_data)
+
+            if markers:
+                themarkers = 3*ones(len(this_channel_wave_data), dtype=int8) 
+                themarkers[-1] = 0
+                this_channel_wave_data = array(tuple(zip(this_channel_wave_data,themarkers))).flatten()
+            
+            relative_memory_index = int(abs(sequence.list_of_relative_delays[idx_start])*awgRate/128)*128+256 # 256 is a buffer to not overflow at end of the memory
+
+            all_pulses[channelName]={
+                "awgChannel" : awgChannel,
+                "pulse_stream" : this_channel_wave_data,
+                "length" : len(this_channel_wave_data),
+                "if_freq"   : if_freq, 
+                "relative_memory_index" : relative_memory_index
+            }
+
+                    
     
                     #all_pulses[c][initial_index : initial_index + len(wave)] = wave
     
-                delay += sequence.list_of_delays[idx] + sequence.list_of_pulses[idx].length
-
+                
 
         return all_pulses
