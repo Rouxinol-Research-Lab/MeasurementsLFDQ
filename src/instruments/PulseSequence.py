@@ -1,4 +1,4 @@
-from matplotlib.pyplot import plot, show
+from matplotlib.pyplot import plot, show,figure
 from numpy import sin, cos, exp, pi, arange, sqrt, array, append, ndarray, invert,zeros
 import numpy as np
 from scipy.signal import convolve
@@ -73,8 +73,30 @@ class PulseSequence:
         self.list_of_relative_delays = array([])
 
     def show(self, timestep = 0.01e-9):
-        t,sequence = self.build(timestep)
-        plot(t,sequence)
-        show()
+
+        totallength = self.get_totallength()
+        
+        t = arange(0,totallength,timestep)
+        sequence = ndarray(len(t))
+
+        initial_time = 0
+        idx = 0
+        zorder = len(self.list_of_pulses)
+        fig = figure()
+        ax = fig.gca()
+        for (p,d) in zip(self.list_of_pulses,self.list_of_delays):
+            idx = int(initial_time/timestep)
+            tp, wavep = p.build(timestep,initial_time)
+            
+            length_p = len(wavep)
+
+            sequence[idx:idx+length_p] = wavep
+
+            initial_time += p.length + d
+            ax.plot(t,sequence,zorder = zorder)
+            zorder -= 1
+        
+
+        return fig
 
             
