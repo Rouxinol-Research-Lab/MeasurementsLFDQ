@@ -162,7 +162,7 @@ class DataChannelManager:
         channelData['channels'][c] = self.createChannelData(awgChannel, if_freq, markers, wave_data, relative_memory_index)
 
         startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*channelData['awgRate']/128)*128+256
-        channelData['totalSizeMeasurement'] = startupInstrumentIndex
+        channelData['startupInstrumentIndex'] = startupInstrumentIndex
     
     def prepareChannelData(self, 
                           awg,
