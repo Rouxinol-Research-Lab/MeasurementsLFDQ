@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from IPython.display import clear_output
 
 from instruments.SCPI_socket import *
-from time import sleep
+from time import sleep,strftime,localtime
 
 
 def cavity_measure(instruments, parameters, freqs):
@@ -219,6 +219,25 @@ def powersweep_measure(instruments, parameters, freqs, attenuations):
     
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
+
+    name = parameters['ExperimentName'] + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ s1.name
+
+    howtoplot = "\
+    data = np.load('"+name+".npz')\n\
+    freqs = data['freqs']\n\
+    mags = np.abs(data['Z'])\n\
+    attenuations =data['attenuations']\n\
+    phase = np.unwrap(np.angle(data['Z']))\n\
+    fig = plt.figure(figsize=(10,7))\n\
+    ax = fig.gca()\n\
+    plt.pcolor(attenuations,freqs*1e-6,20*np.log10(mags.T))\n\
+    cbar=plt.colorbar(label='S21 (dB)')\n\
+    cbar.ax.tick_params(labelsize=20)\n\
+    ax.tick_params(labelsize=20)\n\
+    ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
+    ax.set_ylabel('S21 (dB)',fontsize=20)\n\
+    ax.set_title('"+name+"',fontsize=16)\n\
+    plt.show()"
     
     for idx_att,attenuator_att in enumerate(attenuations):
         instruments['att'].set_attenuation(attenuator_att)
@@ -249,6 +268,10 @@ def powersweep_measure(instruments, parameters, freqs, attenuations):
             
             plt.pause(0.05)
             plt.pcolor(attenuations,freqs*1e-6,mags.T)
+
+    Z = Is+Qs*1j
+
+    np.savez(name,header=howtoplot,params = parameters,freqs=freqs,Z=Z,attenuations=attenuations)
         
     clear_output(wait=True)
     plt.pcolor(attenuations,freqs*1e-6,mags.T)
@@ -269,7 +292,7 @@ def fluxsweep_measure(instruments, parameters, freqs, volts):
                frequency = parameters['Measurement_IF'])
     
     # create pulse sequence
-    s1 = PulseSequence("transmon3D")
+    s1 = PulseSequence("fluxsweep")
     s1.startup_delay = 1e-6
     parameters['RFExcitationState'] = False
     
@@ -342,6 +365,25 @@ def fluxsweep_measure(instruments, parameters, freqs, volts):
     
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
+
+    name = parameters['ExperimentName'] + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ s1.name
+    
+    howtoplot = "\
+        data = np.load('"+name+".npz')\n\
+        freqs = data['freqs']\n\
+        mags = np.abs(data['Z'])\n\
+        voltages =data['voltages']\n\
+        phase = np.unwrap(np.angle(data['Z']))\n\
+        fig = plt.figure(figsize=(10,7))\n\
+        ax = fig.gca()\n\
+        plt.pcolor(voltages,freqs*1e-6,20*np.log10(mags.T))\n\
+        cbar=plt.colorbar(label='S21 (dB)')\n\
+        cbar.ax.tick_params(labelsize=20)\n\
+        ax.tick_params(labelsize=20)\n\
+        ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
+        ax.set_ylabel('S21 (dB)',fontsize=20)\n\
+        ax.set_title('"+name+"',fontsize=16)\n\
+        plt.show()"
     
     for idx_volt,volt in enumerate(volts):
         instruments['Voltsource'].set_voltage(volt)
@@ -372,7 +414,10 @@ def fluxsweep_measure(instruments, parameters, freqs, volts):
             
             plt.pause(0.05)
             plt.pcolor(volts,freqs*1e-6,mags.T)
-        
+    
+    Z = Is+Qs*1j
+    np.savez(name,header=howtoplot,params = parameters, freqs=freqs,voltages=volts, Z=Z)
+
     clear_output(wait=True)
     plt.pcolor(volts,freqs*1e-6,mags.T)
 
