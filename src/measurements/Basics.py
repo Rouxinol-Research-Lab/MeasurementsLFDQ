@@ -251,7 +251,7 @@ def powersweep_measure(instruments, parameters, freqs, attenuations):
             plt.pcolor(attenuations,freqs*1e-6,mags.T)
         
     clear_output(wait=True)
-    plt.plot(freqs,mags)
+    plt.pcolor(attenuations,freqs*1e-6,mags.T)
 
     instruments['awg'].stop()
     instruments['RFsourceMeasurement'].stop_rf()
@@ -374,7 +374,7 @@ def fluxsweep_measure(instruments, parameters, freqs, volts):
             plt.pcolor(volts,freqs*1e-6,mags.T)
         
     clear_output(wait=True)
-    plt.plot(freqs,mags)
+    plt.pcolor(volts,freqs*1e-6,mags.T)
 
     instruments['awg'].stop()
     instruments['RFsourceMeasurement'].stop_rf()
@@ -427,6 +427,7 @@ def twotone_measure(instruments, parameters, freqs):
     sleep(0.05)
     ms.loadChannelDataToAwg(instruments['awg'],channelData,'q1')
     sleep(0.05)
+    ms.setInstrumentsMarker(instruments['awg'], channelData)
     
     instruments['awg'].start()
     
@@ -472,16 +473,16 @@ def twotone_measure(instruments, parameters, freqs):
         sleep(0.05)
     
         I,Q = instruments['alazar'].capture(0,
-                             pointsPerRecord,
-                             parameters['numberOfBuffers'],
-                             parameters['numberOfRecordsPerBuffers'],
-                             parameters['amplitudeReferenceAlazar'],
-                             save=False,
-                             waveformHeadCut=parameters['waveformHeadCut'],
-                             decimation_value = parameters['decimationValue'],
-                             triggerLevel_volts=0.7, 
-                             triggerRange_volts=1,
-                             TTL=True)
+                                            pointsPerRecord,
+                                            parameters['numberOfBuffers'],
+                                            parameters['numberOfRecordsPerBuffers'],
+                                            parameters['amplitudeReferenceAlazar'],
+                                            save=False,
+                                            waveformHeadCut=parameters['waveformHeadCut'],
+                                            decimation_value = parameters['decimationValue'],
+                                            triggerLevel_volts=0.7, 
+                                            triggerRange_volts=1,
+                                            TTL=True)
     
         Is[idx] = I
         Qs[idx] = Q 
@@ -697,8 +698,8 @@ def T1_measure(instruments, parameters, delays):
     samplingRate = 1e9/parameters['decimationValue']
     pointsPerRecord = int(parameters['RFMeasurementLength']*samplingRate/256)*256
     
-    Is = np.ndarray(len(freqs))
-    Qs = np.ndarray(len(freqs))
+    Is = np.ndarray(len(delays))
+    Qs = np.ndarray(len(delays))
     
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
@@ -732,10 +733,10 @@ def T1_measure(instruments, parameters, delays):
     
         
         plt.pause(0.05)
-        plt.plot(freqs,mags)
+        plt.plot(delays,mags)
         
     clear_output(wait=True)
-    plt.plot(freqs,mags)
+    plt.plot(delays,mags)
     
     instruments['Voltsource'].turn_off()
     instruments['awg'].stop()
@@ -823,8 +824,8 @@ def ramsey_measure(instruments, parameters, delays):
     samplingRate = 1e9/parameters['decimationValue']
     pointsPerRecord = int(parameters['RFMeasurementLength']*samplingRate/256)*256
     
-    Is = np.ndarray(len(freqs))
-    Qs = np.ndarray(len(freqs))
+    Is = np.ndarray(len(delays))
+    Qs = np.ndarray(len(delays))
     
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
@@ -858,10 +859,10 @@ def ramsey_measure(instruments, parameters, delays):
     
         
         plt.pause(0.05)
-        plt.plot(freqs,mags)
+        plt.plot(delays,mags)
         
     clear_output(wait=True)
-    plt.plot(freqs,mags)
+    plt.plot(delays,mags)
     
     instruments['Voltsource'].turn_off()
     instruments['awg'].stop()
@@ -955,8 +956,8 @@ def echo_measure(instruments, parameters, delays):
     samplingRate = 1e9/parameters['decimationValue']
     pointsPerRecord = int(parameters['RFMeasurementLength']*samplingRate/256)*256
     
-    Is = np.ndarray(len(freqs))
-    Qs = np.ndarray(len(freqs))
+    Is = np.ndarray(len(delays))
+    Qs = np.ndarray(len(delays))
     
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
@@ -991,10 +992,10 @@ def echo_measure(instruments, parameters, delays):
     
         
         plt.pause(0.05)
-        plt.plot(freqs,mags)
+        plt.plot(delays,mags)
         
     clear_output(wait=True)
-    plt.plot(freqs,mags)
+    plt.plot(delays,mags)
     
     instruments['Voltsource'].turn_off()
     instruments['awg'].stop()

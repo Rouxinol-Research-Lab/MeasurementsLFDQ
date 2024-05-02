@@ -135,7 +135,7 @@ class DataChannelManager:
         wave_data = append(zeros(128-addedZerosLength, dtype = int8),wave_data)
 
         if markers:
-            themarkers = 3*ones(len(wave_data), dtype=int8) 
+            themarkers = 2*ones(len(wave_data), dtype=int8) 
             themarkers[-1] = 0
             wave_data = array(tuple(zip(wave_data,themarkers))).flatten()
         
