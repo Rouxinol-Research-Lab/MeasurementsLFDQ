@@ -176,7 +176,7 @@ class DataChannelManager:
         awgRate = awg.get_sampleRate()/2 # divide by two because there are two channels.
 
         startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*awgRate/128)*128+256
-        totalSizeMeasurement = int(totalExperimentDuration*awgRate/128)*128
+        totalSizeMeasurement = int(totalExperimentDuration*awgRate*2/128)*128
         all_pulses = {'channels':{},'startupInstrumentIndex': startupInstrumentIndex, 'totalSizeMeasurement' : totalSizeMeasurement, 'awgRate': awgRate}
 
         for (channelName, channelInfo) in self.awgChannels.items():
