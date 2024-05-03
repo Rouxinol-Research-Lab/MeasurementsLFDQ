@@ -510,7 +510,7 @@ def twotone_measure(instruments, parameters, freqs):
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
 
-    name = parameters['ExperimentName' + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ s1.name 
+    name = parameters['ExperimentName'] + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ s1.name 
     
     howtoplot = "\
     #HOW TO PLOT\n\
