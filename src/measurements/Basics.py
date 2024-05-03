@@ -437,8 +437,8 @@ def twotone_measure(instruments, parameters, freqs):
                frequency = parameters['Measurement_IF'])
     
     # create pulse sequence
-    s1 = PulseSequence("transmon3D")
-    s1.startup_delay = 1e-6
+    s1 = PulseSequence("twotone")
+    s1.startup_delay = 10e-6
     
     s1.clear()
     
@@ -509,13 +509,30 @@ def twotone_measure(instruments, parameters, freqs):
     
     Is[:] = 10**(parameters['backgroundPlotValue']/20)
     Qs[:] = 10**(parameters['backgroundPlotValue']/20)
+
+    name = parameters['ExperimentName' + "_"  + str(strftime("%Y%m%d_%H%M",localtime())) + "_"+ s1.name 
+    
+    howtoplot = "\
+    #HOW TO PLOT\n\
+    data = np.load('"+name+".npz')\n\
+    freqs = data['freqs']\n\
+    mag = np.abs(data['Z'])\n\
+    phase = np.unwrap(np.angle(data['Z']))\n\
+    fig = plt.figure(figsize=(10,7))\n\
+    ax = fig.gca()\n\
+    plt.plot(freqs*1e-6,20*np.log10(mag))\n\
+    ax.tick_params(labelsize=20)\n\
+    ax.set_xlabel('Excitation Frequency (MHz)',fontsize=20)\n\
+    ax.set_ylabel('S21 (dB)',fontsize=20)\n\
+    ax.set_title('"+name+"',fontsize=16)\n\
+    plt.show()"
     
     
     for idx,freq in enumerate(freqs):
         clear_output(wait=True)
         
         instruments['RFsourceExcitation'].set_frequency(freq-parameters['Excitation_IF'])
-        sleep(0.05)
+        sleep(0.1)
     
         I,Q = instruments['alazar'].capture(0,
                                             pointsPerRecord,
@@ -541,7 +558,9 @@ def twotone_measure(instruments, parameters, freqs):
     clear_output(wait=True)
     plt.plot(freqs,mags)
 
-    
+    Z = Is+Qs*1j
+
+    np.savez(name,header=howtoplot,params=parameters,freqs=freqs,Z=Z)
 
     instruments['awg'].stop()
     instruments['RFsourceMeasurement'].stop_rf()
