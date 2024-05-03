@@ -1,4 +1,4 @@
-from measurements.Pulse import Pulse
+from measurements.Pulse import Pulse, Envelope
 from measurements.PulseSequence import PulseSequence
 from measurements.DataChannelManager import DataChannelManager
 
@@ -426,10 +426,11 @@ def fluxsweep_measure(instruments, parameters, freqs, volts):
     instruments['RFsourceExcitation'].stop_rf()
 
 def twotone_measure(instruments, parameters, freqs):
-    p1 = Pulse(length = parameters['RFExcitationLength'],
-               amplitude = 1,
-               frequency = parameters['ExcitationFrequency'],
-               phase = 0)
+    p1 = Envelope(length = parameters['RFExcitationLength'])
+    #p1 = Pulse(length = parameters['RFExcitationLength'],
+    #           amplitude = 1,
+    #           frequency = parameters['ExcitationFrequency'],
+    #           phase = 0)
     
     mp = Pulse(length = parameters['RFMeasurementLength'],
                amplitude = 1,
@@ -531,7 +532,8 @@ def twotone_measure(instruments, parameters, freqs):
     for idx,freq in enumerate(freqs):
         clear_output(wait=True)
         
-        instruments['RFsourceExcitation'].set_frequency(freq-parameters['Excitation_IF'])
+        #instruments['RFsourceExcitation'].set_frequency(freq-parameters['Excitation_IF'])
+        instruments['RFsourceExcitation'].set_frequency(freq)
         sleep(0.1)
     
         I,Q = instruments['alazar'].capture(0,
