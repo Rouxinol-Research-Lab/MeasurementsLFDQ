@@ -145,7 +145,7 @@ def powersweep_measure(instruments, parameters, freqs, attenuations):
                frequency = parameters['Measurement_IF'])
     
     # create pulse sequence
-    s1 = PulseSequence("transmon3D")
+    s1 = PulseSequence("powersweep")
     s1.startup_delay = 1e-6
     parameters['RFExcitationState'] = False
     
@@ -234,7 +234,7 @@ def powersweep_measure(instruments, parameters, freqs, attenuations):
     cbar=plt.colorbar(label='S21 (dB)')\n\
     cbar.ax.tick_params(labelsize=20)\n\
     ax.tick_params(labelsize=20)\n\
-    ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
+    ax.set_xlabel('Attenuation (dB)',fontsize=20)\n\
     ax.set_ylabel('S21 (dB)',fontsize=20)\n\
     ax.set_title('"+name+"',fontsize=16)\n\
     plt.show()"
@@ -380,7 +380,7 @@ def fluxsweep_measure(instruments, parameters, freqs, volts):
         cbar=plt.colorbar(label='S21 (dB)')\n\
         cbar.ax.tick_params(labelsize=20)\n\
         ax.tick_params(labelsize=20)\n\
-        ax.set_xlabel('Frequency (MHz)',fontsize=20)\n\
+        ax.set_xlabel('Flux (V)',fontsize=20)\n\
         ax.set_ylabel('S21 (dB)',fontsize=20)\n\
         ax.set_title('"+name+"',fontsize=16)\n\
         plt.show()"
