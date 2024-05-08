@@ -439,7 +439,7 @@ def twotone_measure(instruments, parameters, freqs):
     
     # create pulse sequence
     s1 = PulseSequence("twotone")
-    s1.startup_delay = 10e-6
+    s1.startup_delay = 1e-6
     
     s1.clear()
     
@@ -471,6 +471,7 @@ def twotone_measure(instruments, parameters, freqs):
     sleep(0.05)
     ms.loadChannelDataToAwg(instruments['awg'],channelData,'m')
     sleep(0.05)
+    instruments['awg'].getError()
     ms.loadChannelDataToAwg(instruments['awg'],channelData,'q1')
     sleep(0.05)
     ms.setInstrumentsMarker(instruments['awg'], channelData)
@@ -569,11 +570,12 @@ def twotone_measure(instruments, parameters, freqs):
     instruments['RFsourceExcitation'].stop_rf()
 
 def rabi_measure(instruments, parameters, pulse_durations):
-    p1 = Pulse(length = pulse_durations[0],
-               amplitude = 1,
-               frequency = parameters['ExcitationFrequency'],
-               phase = 0)#,
-               #envelope='gaussian'
+    #p1 = Pulse(length = pulse_durations[0],
+    #           amplitude = 1,
+    #           frequency = parameters['ExcitationFrequency'],
+    #           phase = 0)#,
+    #           #envelope='gaussian'
+    p1 = Envelope(length = pulse_durations[0])
     
     mp = Pulse(length = parameters['RFMeasurementLength'],
                amplitude = 1,
@@ -632,7 +634,8 @@ def rabi_measure(instruments, parameters, pulse_durations):
     instruments['RFsourceExcitation'].set_amplitude(parameters['RFExcitationAmplitude'])
     
     instruments['RFsourceMeasurement'].set_frequency(parameters['MeasurementFrequency']-parameters['Measurement_IF'])
-    instruments['RFsourceExcitation'].set_frequency(parameters['ExcitationFrequency']-parameters['Excitation_IF'])
+    #instruments['RFsourceExcitation'].set_frequency(parameters['ExcitationFrequency']-parameters['Excitation_IF'])
+    instruments['RFsourceExcitation'].set_frequency(parameters['ExcitationFrequency'])
     
     instruments['RFsourceMeasurement'].start_rf()
     instruments['RFsourceExcitation'].start_rf()
@@ -657,8 +660,9 @@ def rabi_measure(instruments, parameters, pulse_durations):
         p1.length = duration
         ms.updateChannelData(channelData,s1,'q1')
         ms.loadChannelDataToAwg(instruments['awg'],channelData,'q1')
-        sleep(0.05)
+        sleep(0.1)
         ms.setInstrumentsMarker(instruments['awg'], channelData)
+        sleep(0.1)
     
         I,Q = instruments['alazar'].capture(0,
                              pointsPerRecord,
