@@ -1,5 +1,5 @@
 from matplotlib.pyplot import plot,show
-from numpy import sin,cos,exp,pi,arange,sqrt,ones
+from numpy import sin,cos,exp,pi,arange,sqrt,ones,where,flip,array,linspace
 from scipy.signal import convolve
 
 class Pulse:
@@ -34,7 +34,7 @@ class Pulse:
 
 class Envelope(Pulse):
     def __init__(self, length, envelope = 'square', tau = 0.2, sigma = 0.20):
-        super().__init__(length, 1, 0, 0,envelope)
+        super().__init__(length, 1, 0, 0,envelope,tau,sigma)
 
     def build(self, nsteps, initial_time = 0):
         t = arange(initial_time, initial_time + self.length, nsteps)
@@ -44,6 +44,11 @@ class Envelope(Pulse):
             o = self.sigma * self.length
             s = exp(-(t-initial_time-self.length/2)** 2/o**2/2)
             pulse = pulse*s
+        else:
+            end = linspace(0,1,40000)
+            pulse[:40000] = end
+            end = flip(end)
+            pulse[-40000:] = end
 
         return t, pulse
     
@@ -52,22 +57,30 @@ class Envelope(Pulse):
         plot(t, pulse)
         show()
 
-class SemiGaussianEnvelope(Pulse):
-    def __init__(self, length, envelope = 'square', head = 0.1, tail = 0.1, tau = 0.2, sigma = 0.20):
-        super().__init__(length, 1, 0, 0,envelope)
-        self.head = head
-        self.tail = tail
+class GaussianEnvelope(Pulse):
+    def __init__(self, length, envelope = 'square', length_ends = 0.2, tau = 0.2, sigma = 0.1):
+        super().__init__(length, 1, 0, 0,envelope, tau, sigma)
+        self.ends = length_ends
 
     def build(self, nsteps, initial_time = 0):
         t = arange(initial_time, initial_time + self.length, nsteps)
         pulse = ones(len(t))
 
-
-        t_head = arange(initial_time, initial_time + self.head, nsteps)
+        t_ends = t[where(t<=self.length*self.ends*2)]
         
-        o = self.sigma * self.length
-        s = exp(-(t-initial_time-self.length/2)** 2/o**2/2)
-        pulse = pulse*s
+        o = self.length*self.sigma * self.ends*2
+        s = exp(-(t_ends-initial_time-self.length*self.ends)** 2/o**2/2)
+
+        size_gaussian = len(s)
+        if len(s) %2 == 1:
+            s = s[:-1]
+            size_gaussian = size_gaussian - 1
+
+        where_size = int(size_gaussian/2)
+
+        pulse[:where_size] = s[:where_size]
+        pulse[-where_size:] = s[-where_size:]
+
 
         return t, pulse
     
