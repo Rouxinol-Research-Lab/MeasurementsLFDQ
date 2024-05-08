@@ -1,8 +1,9 @@
 from instruments.VisaInstrument import *
+import struct
 
 class DSOS604A_driver(VisaInstrument):
     def __init__(self,resource_address):
-        super().__init__(resource_address,alias)
+        super().__init__(resource_address)
         self._channel_source = int(self.query(':WAV:SOUR?').strip()[-1])
         self._waveformat = self.query(':WAV:FORMAT?').strip()
         self._offset = float(self.query(":CHANNEL{}:OFFSET?".format(self._channel_source)).split()[0])
