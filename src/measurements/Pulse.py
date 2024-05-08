@@ -52,5 +52,29 @@ class Envelope(Pulse):
         plot(t, pulse)
         show()
 
+class SemiGaussianEnvelope(Pulse):
+    def __init__(self, length, envelope = 'square', head = 0.1, tail = 0.1, tau = 0.2, sigma = 0.20):
+        super().__init__(length, 1, 0, 0,envelope)
+        self.head = head
+        self.tail = tail
+
+    def build(self, nsteps, initial_time = 0):
+        t = arange(initial_time, initial_time + self.length, nsteps)
+        pulse = ones(len(t))
+
+
+        t_head = arange(initial_time, initial_time + self.head, nsteps)
+        
+        o = self.sigma * self.length
+        s = exp(-(t-initial_time-self.length/2)** 2/o**2/2)
+        pulse = pulse*s
+
+        return t, pulse
+    
+    def show(self, timestep = 0.01e-9):
+        t, pulse = self.build(timestep)
+        plot(t, pulse)
+        show()
+
 
 # Define a function to prepare signal data for a waveform
