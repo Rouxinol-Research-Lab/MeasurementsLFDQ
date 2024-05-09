@@ -24,6 +24,17 @@ class Pulse:
             o = self.sigma * self.length
             s = exp(-(t-initial_time-self.length/2)** 2/o**2/2)
             pulse = pulse*s
+        elif self.envelope.lower() == 'squaregaussian':
+            t_ends = arange(0,self.tau,nsteps)
+            s = ones(len(t))
+
+            o = self.sigma*t_ends[-1]
+            head = exp(-(t_ends-t_ends[-1])**2/(2*o)**2)
+            tail = exp(-(t_ends)**2/(2*o)**2)
+
+            n = len(t_ends)
+            s = self.amplitude*concatenate((head,s[n:-n],tail))
+            pulse = pulse*s
 
         return t, pulse
     
