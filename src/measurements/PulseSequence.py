@@ -78,13 +78,12 @@ class PulseSequence:
         
         t = arange(0,totallength,timestep)
         sequence = ndarray(len(t))
-
         initial_time = 0
         idx = 0
         zorder = len(self.channels[c]['pulses'])
         fig = figure()
         ax = fig.gca()
-        for (p,d) in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
+        for idx_p,(p,d) in enumerate(zip(self.channels[c]['pulses'],self.channels[c]['delays'])):
             idx = int(initial_time/timestep)
             tp, wavep = p.build(timestep,initial_time)
             
@@ -104,19 +103,27 @@ class PulseSequence:
         ax = fig.gca()
         yorder = 0
 
+        totallength = 0
+
+        for c in self.channels.keys():
+            totallength_aux = self.get_totallength(c)
+
+            if totallength_aux > totallength:
+                totallength = totallength_aux
+
+        t = arange(0,totallength,timestep)
+
         for c in self.channels.keys():
             if not c in ignore:
-                totallength = self.get_totallength(c)
-                
-                t = arange(0,totallength,timestep)
+      
                 sequence = zeros(len(t))+yorder
 
-                initial_time = 0
                 idx = 0
                 zorder = len(self.channels[c]['pulses'])
                 
 
-                for (p,d) in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
+                for idx_p,(p,d) in enumerate(zip(self.channels[c]['pulses'],self.channels[c]['delays'])):
+                    initial_time = totallength+self.channels[c]['relative_delays'][idx_p]
                     idx = int(initial_time/timestep)
                     tp, wavep = p.build(timestep,initial_time)
 
