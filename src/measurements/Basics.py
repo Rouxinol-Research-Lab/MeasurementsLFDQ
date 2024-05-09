@@ -1,4 +1,4 @@
-from measurements.Pulse import Pulse, Envelope, GaussianEnvelope
+from measurements.Pulse import Pulse, Envelope
 from measurements.PulseSequence import PulseSequence
 from measurements.DataChannelManager import DataChannelManager
 
