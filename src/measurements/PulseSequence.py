@@ -8,50 +8,55 @@ from measurements.Pulse import Pulse
 class PulseSequence:
     def __init__(self, name):
         self.name = name
-        self.list_of_pulses = array([])
-        self.list_of_delays = array([])
-        self.list_of_channels = array([])
-        self.list_of_relative_delays = array([])
+        self.channels = {}
 
     def add(self, p, channel, delay = 0.1e-9):
         if isinstance(p, Pulse):
-            relative_delay = 0
+            c = channel.lower ()
 
-            self.list_of_pulses = append(self.list_of_pulses,p)
-            self.list_of_delays = append(self.list_of_delays,delay)
-            self.list_of_channels = append(self.list_of_channels,channel.lower())
-            self.create_relative_delays()
+            if not c in self.channels:
+                self.channels[c] = {}
+                self.channels[c]['pulses'] = []
+                self.channels[c]['delays'] = []
+                self.channels[c]['relative_delays'] = []
+            
+            self.channels[c]['pulses'] = append(self.channels[c]['pulses'],p)
+            self.channels[c]['delays'] = append(self.channels[c]['delays'],delay)
+            
+            self.create_relative_delays(c)
             
         else:
             raise TypeError('p should type Pulse.')
 
     # TODO
-    def create_relative_delays(self):
+    def create_relative_delays(self,c):
         list_pulse_length = []
-        for a_p, a_d in zip(self.list_of_pulses,self.list_of_delays):
+        for a_p, a_d in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
             list_pulse_length.append(a_p.length + a_d)
 
-        self.list_of_relative_delays = zeros(len(list_pulse_length))
-        for idx,_ in enumerate(self.list_of_pulses):
-            self.list_of_relative_delays[idx] = -sum(list_pulse_length[idx:])
+        self.channels[c]['relative_delays'] = zeros(len(list_pulse_length))
+        for idx,_ in enumerate(self.channels[c]['pulses']):
+            self.channels[c]['relative_delays'][idx] = -sum(list_pulse_length[idx:])
 
-    def get_totallength(self):
-        totallength = np.sum(self.list_of_delays)
-        for p in self.list_of_pulses:
+    def get_totallength(self,channel):
+        c = channel.lower()
+        totallength = np.sum(self.channels[c]['delays'])
+        for p in self.channels[c]['pulses']:
             totallength += p.length
 
         return totallength
     
-    def build(self, timestep):
-        
-        totallength = self.get_totallength()
+    def build(self,channel, timestep):
+        c = channel.lower()
+
+        totallength = self.get_totallength(c)
         
         t = arange(0,totallength,timestep)
         sequence = ndarray(len(t))
 
         initial_time = 0
         idx = 0
-        for (p,d) in zip(self.list_of_pulses,self.list_of_delays):
+        for (p,d) in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
             idx = int(initial_time/timestep)
             tp, wavep = p.build(timestep,initial_time)
             
@@ -62,29 +67,24 @@ class PulseSequence:
             initial_time += p.length + d
             
         return t,sequence
-
-    def set_delay(self,i,delay):
-        self.list_of_delays[i] = delay
     
     def clear(self):
-        self.list_of_pulses = array([])
-        self.list_of_delays = array([])
-        self.list_of_channels = array([])
-        self.list_of_relative_delays = array([])
+        self.channels = {}
 
-    def show(self, timestep = 0.01e-9):
+    def show(self, channel, timestep = 0.01e-9):
+        c = channel.lower()
 
-        totallength = self.get_totallength()
+        totallength = self.get_totallength(c)
         
         t = arange(0,totallength,timestep)
         sequence = ndarray(len(t))
 
         initial_time = 0
         idx = 0
-        zorder = len(self.list_of_pulses)
+        zorder = len(self.channels[c]['pulses'])
         fig = figure()
         ax = fig.gca()
-        for (p,d) in zip(self.list_of_pulses,self.list_of_delays):
+        for (p,d) in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
             idx = int(initial_time/timestep)
             tp, wavep = p.build(timestep,initial_time)
             
@@ -97,6 +97,35 @@ class PulseSequence:
             zorder -= 1
         
 
-        return fig
+        return fig,ax
+    
+    def show_all(self, timestep = 0.01e-9, yorder_step = 2.05, ignore = []):
+        fig = figure()
+        ax = fig.gca()
+        yorder = 0
 
-            
+        for c in self.channels.keys():
+            if not c in ignore:
+                totallength = self.get_totallength(c)
+                
+                t = arange(0,totallength,timestep)
+                sequence = zeros(len(t))+yorder
+
+                initial_time = 0
+                idx = 0
+                zorder = len(self.channels[c]['pulses'])
+                
+
+                for (p,d) in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
+                    idx = int(initial_time/timestep)
+                    tp, wavep = p.build(timestep,initial_time)
+
+                    length_p = len(wavep)
+
+                    sequence[idx:idx+length_p] += wavep
+
+                    initial_time += p.length + d
+                    ax.plot(t,sequence,zorder = zorder)
+                    zorder -= 1
+                
+                yorder += yorder_step
