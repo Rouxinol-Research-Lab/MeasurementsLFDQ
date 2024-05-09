@@ -125,7 +125,7 @@ class DataChannelManager:
 
             delay += sequence.list_of_delays[idx] + pulse.length
 
-        relative_memory_index = int(abs(sequence.list_of_relative_delays[idx_start])*awgRate/128)*128+256 # 256 is a buffer to not overflow at end of the memory
+        relative_memory_index = int(abs(sequence.list_of_relative_delays[idx_start])*awgRate/256)*256+256 # 256 is a buffer to not overflow at end of the memory
 
         return relative_memory_index, this_channel_wave_data
 
@@ -162,7 +162,7 @@ class DataChannelManager:
 
         channelData['channels'][c] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
 
-        startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*channelData['awgRate']/128)*128+256
+        startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*channelData['awgRate']/256)*256+256
         channelData['startupInstrumentIndex'] = startupInstrumentIndex
     
     def prepareChannelData(self, 
@@ -176,7 +176,7 @@ class DataChannelManager:
 
         awgRate = awg.get_sampleRate()/2 # divide by two because there are two channels.
 
-        startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*awgRate/128)*128+256
+        startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*awgRate/256)*256+256
         totalSizeMeasurement = int(totalExperimentDuration*awgRate*2/128)*128
         all_pulses = {'channels':{},'startupInstrumentIndex': startupInstrumentIndex, 'totalSizeMeasurement' : totalSizeMeasurement, 'awgRate': awgRate}
 
