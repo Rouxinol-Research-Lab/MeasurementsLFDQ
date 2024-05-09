@@ -1,5 +1,5 @@
 from matplotlib.pyplot import plot,show
-from numpy import sin,cos,exp,pi,arange,sqrt,ones,where,flip,array,linspace
+from numpy import sin,cos,exp,pi,arange,sqrt,ones,where,flip,array,linspace,concatenate
 from scipy.signal import convolve
 
 class Pulse:
@@ -33,53 +33,28 @@ class Pulse:
         show()
 
 class Envelope(Pulse):
-    def __init__(self, length, envelope = 'square', tau = 0.2, sigma = 0.20):
-        super().__init__(length, 1, 0, 0,envelope,tau,sigma)
+    def __init__(self, length, amplitude, envelope = 'square',tau = 30e-9, sigma = 0.20):
+        super().__init__(length, amplitude, 0, 0, envelope,tau,sigma)
 
     def build(self, nsteps, initial_time = 0):
         t = arange(initial_time, initial_time + self.length, nsteps)
-        pulse = ones(len(t))
+        pulse = self.amplitude*ones(len(t))
 
         if self.envelope.lower() == 'gaussian':
             o = self.sigma * self.length
             s = exp(-(t-initial_time-self.length/2)** 2/o**2/2)
             pulse = pulse*s
-        else:
-            end = linspace(0,1,40000)
-            pulse[:40000] = end
-            end = flip(end)
-            pulse[-40000:] = end
+        elif self.envelope.lower() == 'squaregaussian':
+            t_ends = arange(0,self.tau,nsteps)
+            pulse = ones(len(t))
 
-        return t, pulse
-    
-    def show(self, timestep = 0.01e-9):
-        t, pulse = self.build(timestep)
-        plot(t, pulse)
-        show()
+            
+            o = self.sigma*t_ends[-1]
+            head = exp(-(t_ends-t_ends[-1])**2/(2*o)**2)
+            tail = exp(-(t_ends)**2/(2*o)**2)
 
-class GaussianEnvelope(Pulse):
-    def __init__(self, length, envelope = 'square', length_ends = 0.2, tau = 0.2, sigma = 0.1):
-        super().__init__(length, 1, 0, 0,envelope, tau, sigma)
-        self.ends = length_ends
-
-    def build(self, nsteps, initial_time = 0):
-        t = arange(initial_time, initial_time + self.length, nsteps)
-        pulse = ones(len(t))
-
-        t_ends = t[where(t<=self.length*self.ends*2)]
-        
-        o = self.length*self.sigma * self.ends*2
-        s = exp(-(t_ends-initial_time-self.length*self.ends)** 2/o**2/2)
-
-        size_gaussian = len(s)
-        if len(s) %2 == 1:
-            s = s[:-1]
-            size_gaussian = size_gaussian - 1
-
-        where_size = int(size_gaussian/2)
-
-        pulse[:where_size] = s[:where_size]
-        pulse[-where_size:] = s[-where_size:]
+            n = len(t_ends)
+            pulse = self.amplitude*concatenate((head,pulse[n:-n],tail))
 
 
         return t, pulse
@@ -88,6 +63,7 @@ class GaussianEnvelope(Pulse):
         t, pulse = self.build(timestep)
         plot(t, pulse)
         show()
+
 
 
 # Define a function to prepare signal data for a waveform
