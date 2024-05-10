@@ -78,54 +78,35 @@ class DataChannelManager:
         self.loadDataToAwg(awg, p['pulse_stream'],p['awgChannel'],offset)
 
     def mergePulseData(self, sequence, channelName, awgRate):
-
-        channelInfo = self.awgChannels[channelName.lower()]
+        c = channelName.lower()
+        channelInfo = self.awgChannels[c]
         if_freq = channelInfo['if_freq']
         bytes_amplitude = 127
 
-
-        # check where to start and where to end
-        idx_start = 0
-        idx_end = 0
-
-        for idx,c in enumerate(sequence.list_of_channels):
-            if c == channelName:
-                idx_start = idx
-                break
-
-        # in reverse order
-        for idx,c in enumerate(reversed(sequence.list_of_channels)):
-            if c == channelName:
-                idx_end = len(sequence.list_of_channels)-idx
-                break
-
         
         delay = 0
-        totallength = sum(sequence.list_of_delays[idx_start:idx_end])
-        for p in sequence.list_of_pulses[idx_start:idx_end]:
+        totallength = sum(sequence.channels[c]['delays'])
+        for p in sequence.channels[c]['pulses']:
             totallength += p.length
-
 
         wave_data_size = int(totallength*awgRate)
         this_channel_wave_data = zeros(wave_data_size,dtype=int8)
 
-        for idx in range(idx_start,idx_end):
-            pulse = sequence.list_of_pulses[idx]
+        for idx,pulse in enumerate(sequence.channels[c]['pulses']):
 
-            if channelName == sequence.list_of_channels[idx]:
-                p = copy.deepcopy(pulse)
-                p.frequency = if_freq
-                _, p_wave = p.build(1/awgRate,delay)
+            p = copy.deepcopy(pulse)
+            p.frequency = if_freq
+            _, p_wave = p.build(1/awgRate,delay)
 
-                data = array(bytes_amplitude*p_wave, dtype = int8)
+            data = array(bytes_amplitude*p_wave, dtype = int8)
 
-                i = int(delay*awgRate)
+            i = int(delay*awgRate)
 
-                this_channel_wave_data.flat[i:i+len(data)] = data  
+            this_channel_wave_data.flat[i:i+len(data)] = data  
 
-            delay += sequence.list_of_delays[idx] + pulse.length
+            delay += sequence.channels[c]['delays'][idx] + pulse.length
 
-        relative_memory_index = int(abs(sequence.list_of_relative_delays[idx_start])*awgRate/256)*256+256 # 256 is a buffer to not overflow at end of the memory
+        relative_memory_index = int(abs(sequence.channels[c]['relative_delays'][0])*awgRate/256)*256+256 # 256 is a buffer to not overflow at end of the memory
 
         return relative_memory_index, this_channel_wave_data
 
@@ -162,7 +143,7 @@ class DataChannelManager:
 
         channelData['channels'][c] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
 
-        startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*channelData['awgRate']/256)*256+256
+        startupInstrumentIndex = int(abs(sequence[c]['relative_delays'][0]-sequence.startup_delay)*channelData['awgRate']/256)*256+256
         channelData['startupInstrumentIndex'] = startupInstrumentIndex
     
     def prepareChannelData(self, 
@@ -176,7 +157,13 @@ class DataChannelManager:
 
         awgRate = awg.get_sampleRate()/2 # divide by two because there are two channels.
 
-        startupInstrumentIndex = int(abs(sequence.list_of_relative_delays[0]-sequence.startup_delay)*awgRate/256)*256+256
+        last_relative_delay = 0
+        for c in sequence.channels.keys():
+            relative_delay = sequence.channels[c]['relative_delays'][0]
+            if last_relative_delay > relative_delay:
+                last_relative_delay = relative_delay
+
+        startupInstrumentIndex = int(abs(last_relative_delay-sequence.startup_delay)*awgRate/256)*256+256
         totalSizeMeasurement = int(totalExperimentDuration*awgRate*2/128)*128
         all_pulses = {'channels':{},'startupInstrumentIndex': startupInstrumentIndex, 'totalSizeMeasurement' : totalSizeMeasurement, 'awgRate': awgRate}
 
