@@ -185,7 +185,7 @@ class MeasurementSetup:
         return I,Q
 
 
-    def prepareForCavityMeasure(self, ExperimentName, MeasurementPulseLength, AttenuationValue):
+    def prepareForCavityMeasure(self, MeasurementPulseLength, AttenuationValue):
         self.inst_awg.stop()
         self.inst_RFsourceMeasurement.stop_rf()
 
@@ -203,7 +203,7 @@ class MeasurementSetup:
            phase = 0, # a fase
            envelope='zero') # o seu formanto, gaussiano, quadrado ou quadrado gaussiano
         
-        self.sequence = PulseSequence(ExperimentName) # dá um nome da medida
+        self.sequence = PulseSequence('Cavity') # dá um nome da medida
         self.sequence.startup_delay = 1e-6 # um delay para ligar antecipadamente a fonte de excitação. liga a fonte antecipadamente por esse valor antes do primeiro pulso de excitação
 
         self.sequence.clear()
@@ -281,9 +281,50 @@ class MeasurementSetup:
         self.inst_RFsourceMeasurement.stop_rf()
 
         return Is,Qs,mags
+    
+    def measureCavityFluxsweep(self, volts, freqs):
+        self.inst_awg.start()
+        self.inst_RFsourceMeasurement.start_rf()
+        self.inst_voltsource.turn_on()
+        self.inst_voltsource.ramp_voltage(volts[0])
+
+        Is = np.ndarray((len(freqs),len(volts)))
+        Qs = np.ndarray((len(freqs),len(volts)))
+
+        Is[:] = 10**(self.backgroundPlotValue/20)
+        Qs[:] = 10**(self.backgroundPlotValue/20)
+
+        for idx_volt, volt in enumerate(volts):
+            self.inst_voltsource.set_voltage(volt)
+            sleep(0.05)
+
+            for idx,freq in enumerate(freqs):
+                clear_output(wait=True)
+                
+                self.inst_RFsourceMeasurement.set_frequency(freq-self.Measurement_IF)
+                sleep(0.05)
+
+                I,Q = self.capture()
+
+                Is[idx,idx_volt] = I
+                Qs[idx,idx_volt] = Q 
+                
+                mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
+
+                
+                plt.pause(0.05)
+                plt.pcolor(volts,freqs,mags)
+            
+        clear_output(wait=True)
+        plt.plot(volts,freqs,mags)
+
+        self.inst_awg.stop()
+        self.inst_RFsourceMeasurement.stop_rf()
+
+        return Is,Qs,mags
 
 
-    def prepareForTwotoneMeasure(self, ExperimentName, ExcitationPulseLength):
+    def prepareForTwotoneMeasure(self, ExcitationPulseLength):
         self.inst_awg.stop()
         self.inst_RFsourceMeasurement.stop_rf()
         self.inst_RFsourceExcitation.stop_rf()
@@ -306,7 +347,7 @@ class MeasurementSetup:
                 envelope='zero') # o seu formanto, gaussiano, quadrado ou quadrado gaussiano
         
         # create pulse sequence
-        self.sequence = PulseSequence(ExperimentName) # dá um nome da medida
+        self.sequence = PulseSequence('Twotone') # dá um nome da medida
         self.sequence.startup_delay = 1e-6 # um delay para ligar antecipadamente a fonte de excitação. liga a fonte antecipadamente por esse valor antes do primeiro pulso de excitação
 
         self.sequence.clear()
@@ -392,3 +433,6 @@ class MeasurementSetup:
         self.inst_RFsourceExcitation.stop_rf()
 
         return Is, Qs, mags
+    
+    def prepareForRamseyMeasure(self, HalfPiPulse):
+        pass
