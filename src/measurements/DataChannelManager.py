@@ -143,7 +143,14 @@ class DataChannelManager:
 
         channelData['channels'][c] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
 
-        startupInstrumentIndex = int(abs(sequence[c]['relative_delays'][0]-sequence.startup_delay)*channelData['awgRate']/256)*256+256
+        last_relative_delay = 0
+        for c in sequence.channels.keys():
+            relative_delay = sequence.channels[c]['relative_delays'][0]
+            if last_relative_delay > relative_delay:
+                last_relative_delay = relative_delay
+
+
+        startupInstrumentIndex = int(abs(last_relative_delay-sequence.startup_delay)*channelData['awgRate']/256)*256+256
         channelData['startupInstrumentIndex'] = startupInstrumentIndex
     
     def prepareChannelData(self, 
@@ -173,9 +180,10 @@ class DataChannelManager:
             markers    = channelInfo['measurementMarker']
             markerValue = channelInfo['markerValue']
             
-            relative_memory_index, wave_data = self.mergePulseData(sequence,channelName,awgRate)
+            if channelName in sequence.channels.keys():
+                relative_memory_index, wave_data = self.mergePulseData(sequence,channelName,awgRate)
 
-            all_pulses['channels'][channelName] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
+                all_pulses['channels'][channelName] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
                     
     
                     #all_pulses[c][initial_index : initial_index + len(wave)] = wave
