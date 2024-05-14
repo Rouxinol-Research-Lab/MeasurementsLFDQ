@@ -1,5 +1,5 @@
 from matplotlib.pyplot import plot,show
-from numpy import sin,cos,exp,pi,arange,sqrt,ones,where,flip,array,linspace,concatenate
+from numpy import sin,cos,exp,pi,arange,sqrt,ones,where,flip,array,linspace,concatenate,zeros
 from scipy.signal import convolve
 
 class Pulse:
@@ -35,6 +35,8 @@ class Pulse:
             n = len(t_ends)
             s = self.amplitude*concatenate((head,s[n:-n],tail))
             pulse = pulse*s
+        elif self.envelope.lower() == 'zero':
+            pulse = zeros(len(t))
 
         return t, pulse
     
