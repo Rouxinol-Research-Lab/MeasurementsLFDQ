@@ -29,6 +29,7 @@ class MeasurementSetup:
                  Voltmeter_address='GPIB0::2::INSTR',
                  Voltmeter_channel=5,
                  awgSamplingRate = 64e9, 
+                 TotalMeasurementLength = 125e-6,
                  RFMeasurementLength=5e-6,  # in seconds
                  RFMeasurementAmplitude=18,  # in dBm, this is a local oscillator, it feeds two mixers.
                  RFExcitationLength=20e-6,  # in seconds
@@ -51,6 +52,7 @@ class MeasurementSetup:
                  backgroundPlotValue=-46):  # in dB
 
         
+        self.TotalMeasurementLength = TotalMeasurementLength
         self.RFMeasurementLength = RFMeasurementLength
         self.RFMeasurementAmplitude = RFMeasurementAmplitude
         self.RFExcitationLength = RFExcitationLength
@@ -183,13 +185,12 @@ class MeasurementSetup:
         return I,Q
 
 
-    def prepareForCavityMeasure(self, ExperimentName, MeasurementLength, MeasurementPulseLength, AttenuationValue):
+    def prepareForCavityMeasure(self, ExperimentName, MeasurementPulseLength, AttenuationValue):
         self.inst_awg.stop()
         self.inst_RFsourceMeasurement.stop_rf()
-        
+
         self.RFMeasurementLength = MeasurementPulseLength
         self.attenuation = AttenuationValue
-        self.measurementLength = MeasurementLength
 
         samplingRate = self.DefaultAlazarSamplingRate/self.alazar_params['decimationValue']
 
@@ -224,7 +225,7 @@ class MeasurementSetup:
 
         # essa função gera os dados aceitos pelo awg para uma medida total especificada
         # o tempo total deve ser maior que o tempo total da sequência dos pulsis
-        channelData = self.ms.prepareChannelData(self.inst_awg, self.sequence, self.measurementLength) # add total length, pulses and relaxation to alloc the necessary bytes in memory
+        channelData = self.ms.prepareChannelData(self.inst_awg, self.sequence, self.TotalMeasurementLength) # add total length, pulses and relaxation to alloc the necessary bytes in memory
 
 
         # deleta toda memória do awg
@@ -281,3 +282,113 @@ class MeasurementSetup:
 
         return Is,Qs,mags
 
+
+    def prepareForTwotoneMeasure(self, ExperimentName, ExcitationPulseLength):
+        self.inst_awg.stop()
+        self.inst_RFsourceMeasurement.stop_rf()
+        self.inst_RFsourceExcitation.stop_rf()
+
+        self.ExcitationPulseLength = ExcitationPulseLength
+
+
+        self.inst_RFsourceMeasurement.set_frequency(self.MeasurementFrequency-self.Measurement_IF)
+
+        p1 = Envelope(length = self.ExcitationPulseLength,
+              amplitude = 1,
+              envelope='square') # define o formato gaussiano da medida
+
+
+
+        mp = Pulse(length = self.RFMeasurementLength, # duração
+                amplitude = 1, # amplitude. não utilizado para nada
+                frequency = 70e6, # frequência, o de medida não utilizado para nada
+                phase = 0, # a fase
+                envelope='zero') # o seu formanto, gaussiano, quadrado ou quadrado gaussiano
+        
+        # create pulse sequence
+        self.sequence = PulseSequence(ExperimentName) # dá um nome da medida
+        self.sequence.startup_delay = 1e-6 # um delay para ligar antecipadamente a fonte de excitação. liga a fonte antecipadamente por esse valor antes do primeiro pulso de excitação
+
+        self.sequence.clear()
+
+        self.sequence.add(p1,'Q',self.RFMeasurementLength) 
+        self.sequence.add(mp,'m') # Adiciona o pulso ao sequenciador e o conecta a um canal, no caso o canal "m"
+        # Esse canal vai ser especificado a um dos canais do awg. Isso ainda não aconteceu
+
+
+        self.ms.clearAwgChannel()
+        self.ms.labelAwgChannel(channel = 1, # o canal do awg
+                        channelName = 'm',  # o seu nome em relação ao sequenciador
+                        freq = 0, # a frequência real a ser utilizada por esse canal
+                        markerValue = 2, # Esse valor indica qual marker vai ser ligado enquanto estiver ocorendo algum pulso nesse canal
+                        markers = True) # Afirma que esse canal é usado para configurar markers
+
+        self.ms.labelAwgChannel(channel = 2, # o canal do awg
+                        channelName = 'Q',  # o seu nome em relação ao sequenciador
+                        freq = 0,
+                        markerValue = 1)
+
+
+        # essa função gera os dados aceitos pelo awg para uma medida total especificada
+        # o tempo total deve ser maior que o tempo total da sequência dos pulsis
+        channelData = self.ms.prepareChannelData(self.inst_awg, self.sequence, self.TotalMeasurementLength) # add total length, pulses and relaxation to alloc the necessary bytes in memory
+
+
+        # deleta toda memória do awg
+        self.inst_awg.clearMemory()
+        sleep(0.05)
+
+        # Aloca o espaço necessário para a medida
+        self.ms.allocAwgMemory(self.inst_awg,channelData)
+        sleep(0.05)
+
+        # Carrega os pulsos ao awg
+        self.ms.loadChannelDataToAwg(self.inst_awg,channelData,'m')
+        sleep(0.05)
+
+        self.ms.loadChannelDataToAwg(self.inst_awg,channelData,'Q')
+        sleep(0.05)
+
+        # adiciona o tempo de antecipação da fonte de excitação
+        self.ms.setInstrumentsMarker(self.inst_awg,channelData)
+
+    def measureTwotone(self, qfreqs):
+        self.inst_awg.start()
+        self.inst_RFsourceMeasurement.start_rf()
+        self.inst_RFsourceExcitation.start_rf()
+
+        Is = np.ndarray(len(qfreqs))
+        Qs = np.ndarray(len(qfreqs))
+
+        Is[:] = 10**(self.backgroundPlotValue/20)
+        Qs[:] = 10**(self.backgroundPlotValue/20)
+
+        for idx,freq in enumerate(qfreqs):
+            clear_output(wait=True)
+
+
+            self.inst_RFsourceExcitation.set_frequency(freq)
+            sleep(0.05)
+        
+
+            I,Q = self.capture()
+
+            Is[idx] = I
+            Qs[idx] = Q 
+            
+            mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
+
+            
+            plt.pause(0.05)
+            plt.plot(qfreqs,mags)
+
+        clear_output(wait=True)
+        plt.pause(0.05)
+        plt.plot(qfreqs,mags)
+
+
+        self.inst_awg.stop()
+        self.inst_RFsourceMeasurement.stop_rf()
+        self.inst_RFsourceExcitation.stop_rf()
+
+        return Is, Qs, mags
