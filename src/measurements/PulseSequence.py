@@ -3,7 +3,7 @@ from numpy import sin, cos, exp, pi, arange, sqrt, array, append, ndarray, inver
 import numpy as np
 from scipy.signal import convolve
 
-from measurements.Pulse import Pulse
+from measurements.waveforms.Pulse import Pulse
 
 class PulseSequence:
     def __init__(self, name):
@@ -98,7 +98,7 @@ class PulseSequence:
 
         return fig,ax
     
-    def show_all(self, timestep = 0.01e-9, yorder_step = 2.05, ignore = []):
+    def show_all(self, timestep = 0.01e-9, y_offset = 2.05, ignore = []):
         fig = figure()
         ax = fig.gca()
         yorder = 0
@@ -135,4 +135,4 @@ class PulseSequence:
                     ax.plot(t,sequence,zorder = zorder)
                     zorder -= 1
                 
-                yorder += yorder_step
+                yorder += y_offset
