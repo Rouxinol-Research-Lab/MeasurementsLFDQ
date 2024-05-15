@@ -1,4 +1,4 @@
-from measurements.Pulse import Pulse
+from measurements.waveforms.Pulse import Pulse
 from measurements.PulseSequence import PulseSequence
 import copy
 from time import sleep
