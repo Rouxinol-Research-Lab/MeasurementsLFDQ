@@ -169,8 +169,9 @@ class DataChannelManager:
         this_channel_wave_data = zeros(wave_data_size,dtype=int8)
 
         for idx,pulse in enumerate(sequence.channels[c]['pulses']):
+            
 
-            _, p_wave = p.build(1/awgRate,delay)
+            _, p_wave = pulse.build(1/awgRate,delay)
 
             data = array(bytes_amplitude*p_wave, dtype = int8)
 
