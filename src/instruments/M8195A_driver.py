@@ -59,7 +59,10 @@ class M8195A_driver():
     def close(self):
         SCPI_sock_close(self._session)
 
-    def clearMemory(self):
+    def freeMemory(self):
+        '''
+        Dealloc memory
+        '''
         SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
 
     def allocMemory(self,nbytes):
