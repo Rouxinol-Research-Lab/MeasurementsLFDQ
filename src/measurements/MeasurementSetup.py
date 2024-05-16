@@ -227,18 +227,9 @@ class MeasurementSetup:
         self.ms.allocAwgMemory(self.inst_awg,self.channelData)
         sleep(0.05)
 
-
-        # Carrega os pulsos ao awg
-        self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'m')
-        sleep(0.05)
-
-        # Carrega os pulsos ao awg
-        self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
-        sleep(0.05)
-
-        # Carrega os pulsos ao awg
-        self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'I')
-        sleep(0.05)
+        for channel in self.sequence.channels.keys():
+            self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,channel)
+            sleep(0.05)
 
         # adiciona o tempo de antecipação da fonte de excitação
         self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
@@ -674,7 +665,7 @@ class MeasurementSetup:
 
         self.inst_RFsourceExcitation.set_frequency(ExcitionFrequency)
 
-        p1 = SquarePulse(length = self.ExcitationPulseLength) 
+        p1 = SquarePulse(length = 0.1e-9) 
 
         mp = ZeroPulse(length = self.RFMeasurementLength) 
         
@@ -734,6 +725,61 @@ class MeasurementSetup:
         clear_output(wait=True)
         plt.pause(0.05)
         plt.plot(durations,mags)
+
+        self.inst_awg.stop()
+        self.inst_RFsourceExcitation.stop_rf()
+        self.inst_RFsourceMeasurement.stop_rf()
+
+        return Is,Qs,mags
+    
+    def measureRabiMap(self, qfreqs, durations):
+        self.inst_awg.start()
+        self.inst_RFsourceExcitation.start_rf()
+        self.inst_RFsourceMeasurement.start_rf()
+
+
+        # preparar o array de dados capturados
+        Is = np.ndarray((len(durations),len(qfreqs)))
+        Qs = np.ndarray((len(durations),len(qfreqs)))
+
+        Is[:] = 10**(self.backgroundPlotValue/20)
+        Qs[:] = 10**(self.backgroundPlotValue/20)
+
+        for idx_qfreq, qfreq in enumerate(qfreqs):
+            self.inst_RFsourceExcitation.set_frequency(qfreq)
+            sleep(0.05)
+
+            for idx,duration in enumerate(durations):
+                clear_output(wait=True)
+
+
+                self.sequence.channels['q']['pulses'][0].length = duration
+                
+
+                self.ms.updateChannelData(self.channelData,self.sequence,'Q')
+                
+                self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
+                sleep(0.05)
+
+                self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+                sleep(0.05)
+
+                
+
+                I,Q = self.capture()
+
+                Is[idx,idx_qfreq] = I
+                Qs[idx,idx_qfreq] = Q 
+                
+                mags = 20*np.log10(np.sqrt(Is**2+Qs**2))
+
+                
+                plt.pause(0.05)
+                plt.pcolor(qfreqs,durations,mags)
+
+        clear_output(wait=True)
+        plt.pause(0.05)
+        plt.pcolor(qfreqs,durations,mags)
 
         self.inst_awg.stop()
         self.inst_RFsourceExcitation.stop_rf()
