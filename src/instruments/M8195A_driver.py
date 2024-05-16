@@ -6,6 +6,19 @@ class M8195A_driver():
     def __init__(self, address):
         self._session = SCPI_sock_connect(address)
 
+    
+    def loadData(self,data,channel,offset):
+        '''Load data into the AWG in byte format.'''
+
+        # Make the IEEEBlock
+        dataSize = len(data)
+        numberLength =  int(np.log10(dataSize)+1)
+        tag =  "#{}{}".format(numberLength,dataSize)
+
+        cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
+        self._session.sendall(cmd.encode()+bytes(data)+"\n".encode())
+
+
     def toggleChannelOuput(self,channel):
         print("Checking output state from channel {}.".format(channel))
         result = int(SCPI_sock_query(self._session,":OUTP{}?".format(channel)))
