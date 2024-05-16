@@ -62,9 +62,6 @@ class M8195A_driver():
     def clearMemory(self):
         SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
 
-    def defineSegment(self, nbytes):
-        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(nbytes) +",0")
-
     def allocMemory(self,nbytes):
         '''
         Alloc memory in AWG
