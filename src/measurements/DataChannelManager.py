@@ -223,7 +223,7 @@ class DataChannelManager:
     
         """
 
-        awgRate = self.awg.get_sampleRate()/2 # divide by two because there are two channels.
+        awgRate = self.awg.getSampleRate()/2 # divide by two because there are two channels.
 
         last_relative_delay = 0
         for c in sequence.channels.keys():

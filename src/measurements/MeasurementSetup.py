@@ -93,7 +93,7 @@ class MeasurementSetup:
         self.inst_RFsourceExcitation.stop_rf()
 
 
-        self.inst_awg.set_sampleRate(awgSamplingRate)
+        self.inst_awg.setSampleRate(awgSamplingRate)
 
         # tem que conectar também o awg a nossa referência de rubídio 10 MHz
         self.inst_awg.setRefInClockExternal()  
@@ -118,10 +118,10 @@ class MeasurementSetup:
         self.inst_awg.setVoltageOffset(3,0.5) 
         self.inst_awg.setVoltageOffset(4,0.5)
 
-        self.inst_awg.openChanneloutput(1)
-        self.inst_awg.openChanneloutput(2)
-        self.inst_awg.openChanneloutput(3)
-        self.inst_awg.openChanneloutput(4)
+        self.inst_awg.enableChanneloutput(1)
+        self.inst_awg.enableChanneloutput(2)
+        self.inst_awg.enableChanneloutput(3)
+        self.inst_awg.enableChanneloutput(4)
     
         # configuração das fontes 1 e 2
 
@@ -174,7 +174,7 @@ class MeasurementSetup:
         self.ms.clearAwgChannel()
         self.ms.labelAwgChannel(channel = 1,
                                 channelName = 'm',
-                                markers = True)
+                                markerValue = 2)
 
         self.ms.labelAwgChannel(channel = 2, # o canal do awg
                                 channelName = 'Q',  
@@ -182,8 +182,7 @@ class MeasurementSetup:
         
         self.ms.labelAwgChannel(channel = 1, # o canal do awg
                                 channelName = 'I',
-                                markerValue = 1, # Esse valor indica qual marker vai ser ligado enquanto estiver ocorendo algum pulso nesse canal
-                                markers = True)
+                                markerValue = 1)
 
     def capture(self):
         I,Q = self.inst_alazar.capture(preTriggerSamples = self.alazar_params['preTriggerSamples'],                                       
@@ -213,14 +212,14 @@ class MeasurementSetup:
         self.RFMeasurementLength = self.sequence.channels['m']['pulses'][0].length
         self.alazar_params['postTriggerSamples'] = int(self.RFMeasurementLength*samplingRate/256)*256    # quantos pontos depois do trigger.
 
-        self.channelData = self.ms.prepareChannelData(self.inst_awg, self.sequence, self.TotalMeasurementLength) # add total length, pulses and relaxation to alloc the necessary bytes in memory
+        self.channelData = self.ms.prepareChannelData(self.sequence, self.TotalMeasurementLength) # add total length, pulses and relaxation to alloc the necessary bytes in memory
 
         # deleta toda memória do awg
-        self.inst_awg.clearMemory()
+        self.inst_awg.freeMemory()
         sleep(0.05)
 
         # Aloca o espaço necessário para a medida
-        self.ms.allocAwgMemory(self.inst_awg,self.channelData)
+        self.ms.allocAwgMemory()
         sleep(0.05)
 
         for channel in self.sequence.channels.keys():
@@ -636,7 +635,7 @@ class MeasurementSetup:
             self.sequence.channels['q']['delays'][0] = delay # change the delay between the pulses
             
 
-            self.ms.updateChannelData('Q')
+            self.ms.updateChannelData(self.sequence,'Q')
             
             self.ms.loadChannelDataToAwg('Q')
             sleep(0.05)
@@ -710,7 +709,7 @@ class MeasurementSetup:
             self.sequence.channels['q']['pulses'][0].length = duration
             
 
-            self.ms.updateChannelData('Q')
+            self.ms.updateChannelData(self.sequence,'Q')
             
             self.ms.loadChannelDataToAwg('Q')
             sleep(0.05)
@@ -765,7 +764,7 @@ class MeasurementSetup:
                 self.sequence.channels['q']['pulses'][0].length = duration
                 
 
-                self.ms.updateChannelData('Q')
+                self.ms.updateChannelData(self.sequence,'Q')
                 
                 self.ms.loadChannelDataToAwg('Q')
                 sleep(0.05)
