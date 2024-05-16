@@ -64,6 +64,7 @@ class M8195A_driver():
         Dealloc memory
         '''
         SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
+        SCPI_sock_send(self._session,":TRAC2:DEL:ALL")
 
     def allocMemory(self,nbytes):
         '''
