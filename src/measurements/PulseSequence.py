@@ -108,28 +108,7 @@ class PulseSequence:
             totallength += p.length
 
         return totallength
-    
-    def build(self,channel, timestep):
-        c = channel.lower()
 
-        totallength = self.get_totallength(c)
-        
-        t = arange(0,totallength,timestep)
-        sequence = ndarray(len(t))
-
-        initial_time = 0
-        idx = 0
-        for (p,d) in zip(self.channels[c]['pulses'],self.channels[c]['delays']):
-            idx = int(initial_time/timestep)
-            tp, wavep = p.build(timestep,initial_time)
-            
-            length_p = len(wavep)
-
-            sequence[idx:idx+length_p] = wavep
-
-            initial_time += p.length + d
-            
-        return t,sequence
     
     def clear(self):
         self.channels = {}
