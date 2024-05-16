@@ -369,14 +369,12 @@ class M8195A_driver():
         SCPI_sock_send(self._session,":TRIG:BEG")
 
 
-    def get_sampleRate(self):
+    def getSampleRate(self):
         '''
             Set or query the sample frequency of the output DAC.
         '''
 
         return float(SCPI_sock_query(self._session,":FREQ:RAST?"))
-    
-
 
 
     def setSampleRate(self,freq):
