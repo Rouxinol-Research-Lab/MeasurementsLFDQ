@@ -175,29 +175,6 @@ class M8195A_driver():
         SCPI_sock_send(self._session, ':TRAC1:DATA 1,{},{}'.format(index,data_str))
 
 
-    def setCWFrequency(self,freq,channel=1):
-
-        self.stop()
-        self.setSingle()
-
-        _,awgRate,npoints = findAwgRateAndPeriod(freq)
-
-        SCPI_sock_send(self._session,":TRAC:DEL {}".format(channel))
-        SCPI_sock_send(self._session,":TRAC{}:DEF 1,".format(channel)+ str(npoints) +",0")
-
-        self.set_sampleRate(awgRate)
-
-        x = np.arange(0,npoints*1/awgRate,1/awgRate)
-        awgOsc = np.array((2**7-1)*np.sin(2*np.pi*(freq)*x),dtype=np.int8)
-
-        # converte para os dados especificados
-        data_arrstr = np.char.mod('%d', awgOsc)
-        #combine to a string
-        data_str = ",".join(data_arrstr)
-        # envia os dados para awg
-        SCPI_sock_send(self._session, ':TRAC{}:DATA 1,0,{}'.format(channel,data_str))
-
-
     def sendData(self,channel, x_str,delay, numberOfChannels):
             
         awgRate = 65e9/numberOfChannels
