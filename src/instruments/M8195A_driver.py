@@ -2,57 +2,6 @@ from struct import unpack
 import numpy as np
 from instruments.SCPI_socket import *
 
-def generateData(numberOfChannels, freq, tFcav, tPulse):
-    awgRate = 65e9/numberOfChannels
-    pulsePeriod = 1.0/freq
-    numberOfPointsPerPeriod = int(round(pulsePeriod*awgRate))
-    datatype = np.int8
-    
-    numberOfPeriods = int(round(tFcav/pulsePeriod))
-
-    x = np.arange(0,pulsePeriod*numberOfPeriods,1/awgRate)
-
-    pulseOsc = np.array(2**7*np.sin(2*np.pi*freq*x),dtype=datatype)
-    
-    missingPoints = int(np.ceil(pulseOsc.nbytes/256)*256) - int(pulseOsc.nbytes)
-    if missingPoints != 0:
-        missingPointsArray = np.zeros(missingPoints,dtype=datatype)
-        pulseOsc = np.append(pulseOsc,missingPointsArray)
-        
-    totalNumberOfBytes = int(np.ceil((awgRate*tPulse)/256)*256)
-    
-    return totalNumberOfBytes,pulseOsc
-
-def convertToStr(data):
-    #generate an array with strings
-    data_arrstr = np.char.mod('%f', data)
-    #combine to a string
-    data_str = ",".join(data_arrstr)
-    
-    return data_str
-
-
-
-def findAwgRateAndPeriod(freq,numberOfChannels=1):
-    multiple = 256
-    n = 0
-
-    foundit = False
-    
-    while(not foundit):
-        npoints = (5+n)*multiple
-        nperiod = int(65e9/freq/numberOfChannels)
-        period = np.ceil(npoints/nperiod)
-        awgRate = int(npoints/period*freq)
-        
-        if awgRate < 53.76e9/numberOfChannels:
-            n += 1
-        else:
-            foundit = True
-    
-    
-    return period,awgRate,npoints
-
 class M8195A_driver():
     def __init__(self, address):
         self._session = SCPI_sock_connect(address)
