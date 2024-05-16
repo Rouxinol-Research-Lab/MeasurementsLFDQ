@@ -177,34 +177,6 @@ class M8195A_driver():
         '''
         return SCPI_sock_query(self._session,":TRAC{}:MMOD?".format(channel))
 
-    def _convertToByte(self,data, A):
-
-        np.clip(data, -A, A, data)
-
-        size = 256 * (1 + divmod(len(data) - 1, 256)[0])
-
-        y = np.zeros(size, dtype=np.int8)
-        y[:len(data)] = np.array(127 * data / A, dtype=np.int8)
-        return y
-
-    def loadWaveform(self,data):
-        self.convertedData = self._convertToByte(data,self.Vamp)
-
-    def clearWaveform(self,ch,seq):
-        self.write(":TRAC{}:DEL {}".format(ch,seq));
-
-    def sendWaveform(self,ch,seq):
-        data = self.convertedData
-        n_elem = len(data)
-
-        self.write(':TRAC{}:DEF {},{},0'.format(ch,seq, n_elem))
-        # create binary data as bytes with header
-        start, length = 0, len(data)
-        sLen = b'%d' % length
-        sHead = b'#%d%s' % (len(sLen), sLen)
-        # send to AWG
-        sCmd = b':TRAC%d:DATA %d,%d,' % (ch, seq, start)
-        self.write_raw(sCmd + sHead + data[start:start+length].tobytes())
 
 
     def getTriggerMode(self):
