@@ -97,8 +97,7 @@ class DataChannelManager:
 
     '''
 
-    def __init__(self, name, awg):
-        self.name = name
+    def __init__(self, awg):
         self.awg = awg
         self.awgChannels = {}
         self._channelData = {}

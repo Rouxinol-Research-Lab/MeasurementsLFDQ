@@ -169,25 +169,21 @@ class MeasurementSetup:
         self.alazar_params['postTriggerSamples'] = int(self.RFMeasurementLength*samplingRate/256)*256    # quantos pontos depois do trigger.
         self.alazar_params['preTriggerSamples'] = 0 # quantos pontos o alazar vai salvar antes do trigger.
 
-        self.ms = DataChannelManager('AWG')
+        self.ms = DataChannelManager(self.inst_awg)
 
         self.ms.clearAwgChannel()
-        self.ms.labelAwgChannel(channel = 1, # o canal do awg
-                        channelName = 'm',  # o seu nome em relação ao sequenciador
-                        freq = 0, # a frequência real a ser utilizada por esse canal
-                        markerValue = 2, # Esse valor indica qual marker vai ser ligado enquanto estiver ocorendo algum pulso nesse canal
-                        markers = True) # Afirma que esse canal é usado para configurar markers
+        self.ms.labelAwgChannel(channel = 1,
+                                channelName = 'm',
+                                markers = True)
 
         self.ms.labelAwgChannel(channel = 2, # o canal do awg
-                        channelName = 'Q',  # o seu nome em relação ao sequenciador
-                        freq = 0,
-                        markerValue = 1)
+                                channelName = 'Q',  
+                                markerValue = 1)
         
         self.ms.labelAwgChannel(channel = 1, # o canal do awg
-                        channelName = 'I',  # o seu nome em relação ao sequenciador
-                        freq = 0,
-                        markerValue = 1, # Esse valor indica qual marker vai ser ligado enquanto estiver ocorendo algum pulso nesse canal
-                        markers = True)
+                                channelName = 'I',
+                                markerValue = 1, # Esse valor indica qual marker vai ser ligado enquanto estiver ocorendo algum pulso nesse canal
+                                markers = True)
 
     def capture(self):
         I,Q = self.inst_alazar.capture(preTriggerSamples = self.alazar_params['preTriggerSamples'],                                       
@@ -228,11 +224,11 @@ class MeasurementSetup:
         sleep(0.05)
 
         for channel in self.sequence.channels.keys():
-            self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,channel)
+            self.ms.loadChannelDataToAwg(channel)
             sleep(0.05)
 
         # adiciona o tempo de antecipação da fonte de excitação
-        self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+        self.ms.setInstrumentsMarker()
 
     def prepareForCavityMeasure(self, AttenuationValue):
         self.inst_awg.stop()
@@ -506,12 +502,12 @@ class MeasurementSetup:
 
             
 
-            self.ms.updateChannelData(self.channelData,self.sequence,'Q')
+            self.ms.updateChannelData(self.sequence,'Q')
             
-            self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
+            self.ms.loadChannelDataToAwg('Q')
             sleep(0.05)
 
-            self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+            self.ms.setInstrumentsMarker()
             sleep(0.05)
 
             
@@ -560,12 +556,12 @@ class MeasurementSetup:
                 self.sequence.channels['q']['delays'][0] = delay # change the delay between the pulses
                 
 
-                self.ms.updateChannelData(self.channelData,self.sequence,'Q')
+                self.ms.updateChannelData(self.sequence,'Q')
                 
-                self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
+                self.ms.loadChannelDataToAwg('Q')
                 sleep(0.05)
 
-                self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+                self.ms.setInstrumentsMarker()
                 sleep(0.05)
 
                 
@@ -640,12 +636,12 @@ class MeasurementSetup:
             self.sequence.channels['q']['delays'][0] = delay # change the delay between the pulses
             
 
-            self.ms.updateChannelData(self.channelData,self.sequence,'Q')
+            self.ms.updateChannelData('Q')
             
-            self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
+            self.ms.loadChannelDataToAwg('Q')
             sleep(0.05)
 
-            self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+            self.ms.setInstrumentsMarker()
             sleep(0.05)
 
             
@@ -714,12 +710,12 @@ class MeasurementSetup:
             self.sequence.channels['q']['pulses'][0].length = duration
             
 
-            self.ms.updateChannelData(self.channelData,self.sequence,'Q')
+            self.ms.updateChannelData('Q')
             
-            self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
+            self.ms.loadChannelDataToAwg('Q')
             sleep(0.05)
 
-            self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+            self.ms.setInstrumentsMarker()
             sleep(0.05)
 
             
@@ -769,12 +765,12 @@ class MeasurementSetup:
                 self.sequence.channels['q']['pulses'][0].length = duration
                 
 
-                self.ms.updateChannelData(self.channelData,self.sequence,'Q')
+                self.ms.updateChannelData('Q')
                 
-                self.ms.loadChannelDataToAwg(self.inst_awg,self.channelData,'Q')
+                self.ms.loadChannelDataToAwg('Q')
                 sleep(0.05)
 
-                self.ms.setInstrumentsMarker(self.inst_awg,self.channelData)
+                self.ms.setInstrumentsMarker()
                 sleep(0.05)
 
                 
