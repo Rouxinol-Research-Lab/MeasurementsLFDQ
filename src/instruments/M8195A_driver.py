@@ -425,6 +425,13 @@ class M8195A_driver():
         result = SCPI_sock_query(self._session, ':VOLT{}:OFFS?'.format(channel))
         print(result)
 
+    def setSecondChannelToExt(self):
+        '''
+        Sets the second channel to use the external memory (16 GBytes)
+        '''
+        SCPI_sock_send(self.inst_awg._session, ':TRAC2:MMOD EXT') # use external memory, 16 Gbytes
+
+
     def getChannelSetting(self):
         '''
         • SINGle  Channel 1 can generate a signal
