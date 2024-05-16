@@ -30,17 +30,17 @@ class PulseSequence:
         sequence in channel 'Q' be just a P3, with length 3 microsendos and delay 1.5 microseconds.
 
         Visually this is the sequence in channel 'I' and 'Q'
-         _______                                     _______
-        |       |                                   |       |           
-        |   P1  |                                   |   P2  |          
+         _______                                     _______        
+        |       |                                   |       |               
+        |   P1  |                                   |   P2  |              
         |       |___________________________________|       |_______
             1µs                     5µs                1µs      1µs
         |<----->|<--------------------------------->|<----->|<----->|
                                                                         sequences repeat
                                     _____________________               ------->
-                                   |                     |
-                                   |          P3         |
-                                   |                     |__________
+                                   |                     |          
+                                   |          P3         |          
+        ___________________________|                     |__________
                                               5 µs           1.5 µs
                                    |<------------------->|<-------->|
 
@@ -120,6 +120,13 @@ class PulseSequence:
         self.channels = {}
     
     def show_all(self, timestep = 0.01e-9, y_offset = 2.05, ignore = []):
+        '''
+            plots the sequences.
+
+            ignore is a list of channels that one wants to not plot.
+            y_offset is the y axis offset between sequences in the plot.
+            timestep is the steps used to build the pulses.
+        '''
         fig = figure()
         ax = fig.gca()
         yorder = 0
