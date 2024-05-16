@@ -375,31 +375,7 @@ class M8195A_driver():
         '''
 
         return float(SCPI_sock_query(self._session,":FREQ:RAST?"))
-    
 
-
-
-    def set_sampleRate(self,freq,nChannel=1):
-        '''
-            Set or query the sample frequency of the output DAC.
-        '''
-        
-
-        if type(freq) == str:
-            if freq.lower() == 'min' or freq.lower() == 'max':
-                freq = freq.lower()
-            else:
-                raise ValueError("Invalid value. Function accepts only 'min', 'max', float or int.")
-        elif type(freq) == float:
-            if not (freq >= 53.76e9/nChannel and freq <= 65e9/nChannel):
-                raise ValueError("Invalid value. Value not within correct range: between 53.76 GSa/s and 65 GSa/s")
-        elif type(freq) == int:
-            if not (freq >= int(53.76e9/nChannel) and freq <= int(65e9/nChannel)):
-                raise ValueError("Invalid value. Value not within correct range: between 53.76 GSa/s and 65 GSa/s")
-        else:
-            raise TypeError("Invalid type. Function accepts only str, float or int.")
-
-        SCPI_sock_send(self._session,":FREQ:RAST {}".format(freq))
 
     def downloadWaveform(self):
         size = int(SCPI_sock_query(self._session,':TRAC1:CAT?').split(',')[1])
