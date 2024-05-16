@@ -66,24 +66,11 @@ class M8195A_driver():
         SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(nbytes) +",0")
 
     def allocMemory(self,nbytes):
-        if not isinstance(nbytes,int):
-            raise TypeError("Parameter nbytes must be an integer!")
-            
-        if nbytes%256 != 0:
-            raise ValueError("Parameter nbytes must be a multiple of 256!")
+        '''
+        Alloc memory in AWG
+        '''
+        SCPI_sock_send(self._session,":TRAC1:DEF 1,{},0".format(nbytes))
         
-        print('Deleting previously defined segment.')
-        SCPI_sock_send(self._session,":TRAC1:DEL:ALL")
-        print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
-
-        print('Defining segment size and setting all values to 0.')
-        SCPI_sock_send(self._session,":TRAC1:DEF 1,"+ str(nbytes) +",0")
-        print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
-
-        print('Checking segment defined:')
-        print("id,size")
-        print(SCPI_sock_query(self._session,":TRAC1:CAT?"))
-        print("AWG response: "+ SCPI_sock_query(self._session,"SYST:ERR?"))
 
 
     def getMemoryDivision(self):
