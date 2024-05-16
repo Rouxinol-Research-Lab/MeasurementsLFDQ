@@ -72,7 +72,16 @@ class M8195A_driver():
         '''
         SCPI_sock_send(self._session,":TRAC1:DEF 1,{},0".format(nbytes))
         
-
+    def getDataFromSocketBinary(self):
+        dat = b''
+        while 1:
+            message = self._session.recv(4096)
+            last=len(message)
+            if chr(message[-1]) == "\n":
+                dat=dat+message[:-1]
+                return dat
+            else:
+                dat=dat+message
 
     def getMemoryDivision(self):
         '''DIV1|DIV2|DIV4
