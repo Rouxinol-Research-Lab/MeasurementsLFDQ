@@ -47,12 +47,10 @@ class DataChannelManager:
         
 
 
-
-
-    def loadChannelDataToAwg(self, awg, channelData, channelName):
+    def loadChannelDataToAwg(self, channelData, channelName):
         p = channelData['channels'][channelName.lower()]
         offset = channelData['totalSizeMeasurement']-p['relative_memory_index']
-        awg.loadData(p['pulse_stream'],p['awgChannel'],offset)
+        self.awg.loadData(p['pulse_stream'],p['awgChannel'],offset)
 
     def mergePulseData(self, sequence, channelName, awgRate):
         c = channelName.lower()
@@ -130,8 +128,7 @@ class DataChannelManager:
         startupInstrumentIndex = int(abs(last_relative_delay-sequence.startup_delay)*channelData['awgRate']/256)*256+256
         channelData['startupInstrumentIndex'] = startupInstrumentIndex
     
-    def prepareChannelData(self, 
-                          awg,
+    def prepareChannelData(self,
                           sequence,
                           totalExperimentDuration):
         """
@@ -139,7 +136,7 @@ class DataChannelManager:
     
         """
 
-        awgRate = awg.get_sampleRate()/2 # divide by two because there are two channels.
+        awgRate = self.awg.get_sampleRate()/2 # divide by two because there are two channels.
 
         last_relative_delay = 0
         for c in sequence.channels.keys():
