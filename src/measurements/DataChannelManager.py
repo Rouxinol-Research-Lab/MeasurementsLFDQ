@@ -93,7 +93,18 @@ class DataChannelManager:
         'awgRate': 32000000000
     }
 
-    Let focus in one of the channel 
+    startupInstrumentIndex is the index position in memory where the excitation instruments starts.
+    totalSizeMeasurement is the total size of the memory allocated. Multiply it by 1/awgRate and one gets the length in time units.
+    awgRate is the sampling rate for each channel.
+
+
+    Let focus in one of the channel:
+
+    awgChannel is the number of the channel to where the data will be sent
+    pulse_stream is array of bytes that will be loaded into awg to channel awgChannel
+    length is the length of the pulse_stream
+    relative_memory_index is the position where the pulse_stream start in the AWG memory.
+
 
     '''
 
@@ -140,8 +151,12 @@ class DataChannelManager:
         self.awg.loadData(p['pulse_stream'],p['awgChannel'],offset)
 
     def mergePulseData(self, sequence, channelName, awgRate):
+        '''
+        This function creates a array with the pulse stream data from PulseSequence of a given channelName. The time
+        step used is 1/awgRate
+        '''
+
         c = channelName.lower()
-        channelInfo = self.awgChannels[c]
         bytes_amplitude = 127
 
         
@@ -170,6 +185,22 @@ class DataChannelManager:
         return relative_memory_index, this_channel_wave_data
 
     def createChannelData(self,awgChannel, markers, markerValue, wave_data, relative_memory_index):
+        '''
+        this creates the channel data of a given channel.
+
+        If markers is True, it will interleaves the markervalue with the wave_data.
+        For example, if the 
+        wave_data = array([1,2,3,4,5,6])
+        and marker_value is  1
+
+        then the data will be
+
+        array([1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1])
+
+        That is only is if the AWG channel is 1.
+
+        To understand markers, see pages 163, 253, 256 of the M8195 manual.
+        '''
         # total wave size must be multiples of 128
         addedZerosLength = len(wave_data)%128
         wave_data = append(zeros(128-addedZerosLength, dtype = int8),wave_data)
@@ -190,6 +221,9 @@ class DataChannelManager:
         return aChannelData
     
     def updateChannelData(self, sequence, channelName):
+        '''
+        Updates a given channel with a new sequence.
+        '''
         c = channelName.lower()
         channelInfo = self.awgChannels[c]
         awgChannel = channelInfo['channel']
@@ -219,7 +253,7 @@ class DataChannelManager:
                           sequence,
                           totalExperimentDuration):
         """
-        Prepare signal data for waveform.Three formats are available.
+        Prepare signal data for waveform.
     
         """
 
