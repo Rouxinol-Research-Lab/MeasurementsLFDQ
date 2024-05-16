@@ -481,6 +481,11 @@ class MeasurementSetup:
         self.inst_RFsourceMeasurement.start_rf()
 
 
+        p1 = SquarePulse(length = self.HalfPiPulse)
+        p2 = SquarePulse(length = self.HalfPiPulse)
+        mp = ZeroPulse(length = self.RFMeasurementLength)
+
+
         # preparar o array de dados capturados
         Is = np.ndarray(len(delays))
         Qs = np.ndarray(len(delays))
@@ -491,8 +496,14 @@ class MeasurementSetup:
         for idx,delay in enumerate(delays):
             clear_output(wait=True)
 
+            self.sequence.clear()
 
-            self.sequence.channels['q']['delays'][0] = delay # change the delay between the pulses
+
+            self.sequence.add(p1,'Q',delay) 
+            self.sequence.add(p2,'Q',self.RFMeasurementLength) 
+            self.sequence.add(mp,'m') # Adiciona o pulso ao sequenciador e o conecta a um canal, no caso o canal "m"
+            # Esse canal vai ser especificado a um dos canais do awg. Isso ainda não aconteceu
+
             
 
             self.ms.updateChannelData(self.channelData,self.sequence,'Q')
