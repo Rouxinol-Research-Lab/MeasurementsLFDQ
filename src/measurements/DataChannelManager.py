@@ -59,23 +59,12 @@ class DataChannelManager:
                 return dat
             else:
                 dat=dat+message
-    
-    def getIEEEBlockTag(self,data):
-        dataSize = len(data)
-        numberLength =  int(log10(dataSize)+1)
-        return "#{}{}".format(numberLength,dataSize)
-    
-    def loadDataToAwg(self,awg,data,channel,offset):
-        tag = self.getIEEEBlockTag(data)
-        cmd = ":TRAC{}:DATA 1,{},".format(channel,offset) + tag
-        awg._session.sendall(cmd.encode()+bytes(data)+"\n".encode())
-
 
 
     def loadChannelDataToAwg(self, awg, channelData, channelName):
         p = channelData['channels'][channelName.lower()]
         offset = channelData['totalSizeMeasurement']-p['relative_memory_index']
-        self.loadDataToAwg(awg, p['pulse_stream'],p['awgChannel'],offset)
+        awg.loadData(p['pulse_stream'],p['awgChannel'],offset)
 
     def mergePulseData(self, sequence, channelName, awgRate):
         c = channelName.lower()
