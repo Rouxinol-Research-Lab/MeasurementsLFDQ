@@ -102,6 +102,9 @@ class PulseSequence:
             self.channels[c]['relative_delays'][idx] = -sum(list_pulse_length[idx:])
 
     def get_totallength(self,channel):
+        '''
+        Calculate the total length of a sequence in a channel.
+        '''
         c = channel.lower()
         totallength = np.sum(self.channels[c]['delays'])
         for p in self.channels[c]['pulses']:
@@ -111,6 +114,9 @@ class PulseSequence:
 
     
     def clear(self):
+        '''
+        Clear the sequences.
+        '''
         self.channels = {}
 
     def show(self, channel, timestep = 0.01e-9):
