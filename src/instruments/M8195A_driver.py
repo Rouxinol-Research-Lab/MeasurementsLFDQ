@@ -216,42 +216,6 @@ class M8195A_driver():
         SCPI_sock_send(self._session,":OUTP{} 1".format(channel))
         print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
 
-
-    def setNumberOfChannels(self,numberOfChannels):
-        if numberOfChannels > 2:
-            raise ValueError("numberOfChannels cannot be higher than 2 for this instrument! Check for more licenses.")
-            
-        if numberOfChannels == 1:
-            print("Setting system to singular.")
-            SCPI_sock_send(self._session,":INST:DACM SING")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
-            print("Setting memory division to 1.")
-            SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV1")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
-            print("Setting channel 1 memory to extended.")
-            SCPI_sock_send(self._session,":TRAC1:MMOD EXT")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
-            
-        else:  # numberOfChannel is 2
-            print("Setting system to dual.")
-            SCPI_sock_send(self._session,":INST:DACM DUAL")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
-            print("Setting memory division to 2.")
-            SCPI_sock_send(self._session,":INST:MEM:EXT:RDIV DIV2")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
-            print("Setting channel 1 memory to extended.")
-            SCPI_sock_send(self._session,":TRAC1:MMOD EXT")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-            
-            print("Setting channel 4 memory to extended.")
-            SCPI_sock_send(self._session,":TRAC4:MMOD EXT")
-            print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-
     def getMemoryDivision(self):
         '''DIV1|DIV2|DIV4
             • DIV1  Memory sample rate is the DAC Sample Rate.
