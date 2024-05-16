@@ -9,6 +9,17 @@ from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, 
 
 
 class DataChannelManager:
+    '''
+    An instance of this class does two things. It receives a PulseSequence and create a dict called ChannelData,
+    which is a structure with the data of th pulses in the format accepted by the AWG.
+
+    To do that is uses and dict called awgChannel which connects the channels defined in the 
+    PulseSequence to a AWG channels.
+
+    Let
+
+
+    '''
 
     def __init__(self, name, awg):
         self.name = name
@@ -69,8 +80,6 @@ class DataChannelManager:
 
         for idx,pulse in enumerate(sequence.channels[c]['pulses']):
 
-            p = copy.deepcopy(pulse)
-            p.frequency = if_freq
             _, p_wave = p.build(1/awgRate,delay)
 
             data = array(bytes_amplitude*p_wave, dtype = int8)
@@ -85,7 +94,7 @@ class DataChannelManager:
 
         return relative_memory_index, this_channel_wave_data
 
-    def createChannelData(self,awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index):
+    def createChannelData(self,awgChannel, markers, markerValue, wave_data, relative_memory_index):
         # total wave size must be multiples of 128
         addedZerosLength = len(wave_data)%128
         wave_data = append(zeros(128-addedZerosLength, dtype = int8),wave_data)
@@ -100,7 +109,6 @@ class DataChannelManager:
             "awgChannel" : awgChannel,
             "pulse_stream" : wave_data,
             "length" : len(wave_data),
-            "if_freq"   : if_freq, 
             "relative_memory_index" : relative_memory_index
         }
 
@@ -110,13 +118,12 @@ class DataChannelManager:
         c = channelName.lower()
         channelInfo = self.awgChannels[c]
         awgChannel = channelInfo['channel']
-        if_freq    = channelInfo['if_freq']
         markers    = channelInfo['measurementMarker']
         markerValue = channelInfo['markerValue']
         
         relative_memory_index, wave_data = self.mergePulseData(sequence,channelName.lower(),channelData['awgRate'])
 
-        channelData['channels'][c] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
+        channelData['channels'][c] = self.createChannelData(awgChannel, markers, markerValue, wave_data, relative_memory_index)
 
         last_relative_delay = 0
         for c in sequence.channels.keys():
@@ -150,14 +157,13 @@ class DataChannelManager:
 
         for (channelName, channelInfo) in self.awgChannels.items():
             awgChannel = channelInfo['channel']
-            if_freq    = channelInfo['if_freq']
             markers    = channelInfo['measurementMarker']
             markerValue = channelInfo['markerValue']
             
             if channelName in sequence.channels.keys():
                 relative_memory_index, wave_data = self.mergePulseData(sequence,channelName,awgRate)
 
-                all_pulses['channels'][channelName] = self.createChannelData(awgChannel, if_freq, markers, markerValue, wave_data, relative_memory_index)
+                all_pulses['channels'][channelName] = self.createChannelData(awgChannel, markers, markerValue, wave_data, relative_memory_index)
                     
     
                     #all_pulses[c][initial_index : initial_index + len(wave)] = wave
