@@ -118,33 +118,6 @@ class PulseSequence:
         Clear the sequences.
         '''
         self.channels = {}
-
-    def show(self, channel, timestep = 0.01e-9):
-        c = channel.lower()
-
-        totallength = self.get_totallength(c)
-        
-        t = arange(0,totallength,timestep)
-        sequence = ndarray(len(t))
-        initial_time = 0
-        idx = 0
-        zorder = len(self.channels[c]['pulses'])
-        fig = figure()
-        ax = fig.gca()
-        for idx_p,(p,d) in enumerate(zip(self.channels[c]['pulses'],self.channels[c]['delays'])):
-            idx = int(initial_time/timestep)
-            tp, wavep = p.build(timestep,initial_time)
-            
-            length_p = len(wavep)
-
-            sequence[idx:idx+length_p] = wavep
-
-            initial_time += p.length + d
-            ax.plot(t,sequence,zorder = zorder)
-            zorder -= 1
-        
-
-        return fig,ax
     
     def show_all(self, timestep = 0.01e-9, y_offset = 2.05, ignore = []):
         fig = figure()
