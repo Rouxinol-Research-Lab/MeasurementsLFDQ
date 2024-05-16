@@ -535,6 +535,8 @@ class MeasurementSetup:
         self.inst_RFsourceExcitation.stop_rf()
         self.inst_RFsourceMeasurement.stop_rf()
 
+        return Is, Qs, mags
+
     def measureRamseyMap(self, qfreqs, delays):
         self.inst_awg.start()
         self.inst_RFsourceExcitation.start_rf()
