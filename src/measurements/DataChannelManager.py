@@ -10,14 +10,15 @@ from numpy import array, pi, ndarray, sin, cos, sqrt, exp, zeros, arange, ones, 
 
 class DataChannelManager:
 
-    def __init__(self, name):
+    def __init__(self, name, awg):
         self.name = name
+        self.awg = awg
         self.awgChannels = {}
 
     def labelAwgChannel(self, channel, channelName, freq, markerValue, markers = False):
         self.awgChannels[channelName.lower()] = {'channel':channel, 'if_freq': freq, 'measurementMarker': markers, 'markerValue': markerValue}
 
-    def setInstrumentsMarker(self, awg, channelData, marker_value = 1, offset = 0):
+    def setInstrumentsMarker(self, channelData, marker_value = 1, offset = 0):
         '''
         Set a position to trigger a marker
     
@@ -36,29 +37,16 @@ class DataChannelManager:
         a = repeat(0,128) # awg only accepts multiples of 128
         b = repeat(marker_value,128)
         data = array(array(tuple(zip(a,b))).flatten(),dtype=int8)
-        self.loadDataToAwg(awg,data,1,offset)
+        self.awg.loadData(data,1,offset)
 
     def clearAwgChannel(self):
         self.awgChannels.clear()
 
-    def deleteAwgMemory(self,awg):
-        SCPI_sock_send(awg._session,":TRAC1:DEL:ALL")
-        SCPI_sock_send(awg._session,":TRAC2:DEL:ALL")
-
-    def allocAwgMemory(self, awg, channelData):
-        SCPI_sock_send(awg._session,":TRAC1:DEF 1,{},0".format(channelData['totalSizeMeasurement']))
+    def allocAwgMemory(self, channelData):
+        self.awg.allocMemory(channelData['totalSizeMeasurement'])
         
 
-    def getDataFromSocketBinary(self,awg):
-        dat = b''
-        while 1:
-            message = awg._session.recv(4096)
-            last=len(message)
-            if chr(message[-1]) == "\n":
-                dat=dat+message[:-1]
-                return dat
-            else:
-                dat=dat+message
+
 
 
     def loadChannelDataToAwg(self, awg, channelData, channelName):
