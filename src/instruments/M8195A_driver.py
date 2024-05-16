@@ -19,18 +19,6 @@ class M8195A_driver():
         self._session.sendall(cmd.encode()+bytes(data)+"\n".encode())
 
 
-    def toggleChannelOuput(self,channel):
-        print("Checking output state from channel {}.".format(channel))
-        result = int(SCPI_sock_query(self._session,":OUTP{}?".format(channel)))
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-        
-        print("Changing output state.")
-        if result == 0:
-            SCPI_sock_send(self._session,":OUTP{} 1".format(channel))
-        else:
-            SCPI_sock_send(self._session,":OUTP{} 0".format(channel))
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
-
     def enableChanneloutput(self,channel):
         '''Enable a channel'''
 
