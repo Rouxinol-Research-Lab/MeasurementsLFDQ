@@ -429,12 +429,6 @@ class M8195A_driver():
         '''
         SCPI_sock_send(self.inst_awg._session, ':TRAC2:MMOD EXT') # use external memory, 16 Gbytes
 
-    def dividesExtMemoryBetweenChannels(self):
-        '''
-        This divides the memory for each channel. This is will also divides the Sampling Rate for each channel.
-        '''
-        SCPI_sock_send(self.inst_awg._session, ':INST:MEM:EXT:RDIV DIV2') # divides memory, one for each channel
-
     def getChannelSetting(self):
         '''
         • SINGle  Channel 1 can generate a signal
