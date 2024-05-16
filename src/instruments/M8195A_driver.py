@@ -206,26 +206,41 @@ class M8195A_driver():
         SCPI_sock_send(self._session,":FREQ:RAST {}".format(freq))
 
     def downloadWaveform(self):
+        '''
+        Download the data from AWG.
+        '''
         size = int(SCPI_sock_query(self._session,':TRAC1:CAT?').split(',')[1])
         data = SCPI_sock_query(self._session,':TRAC1:DATA? 1, 0,{}'.format(size))
         return np.array(data.split(',')).astype(int)
 
 
     def setVoltage(self, channel, volt):
+        '''
+        Set the voltage output of a channel
+        '''
         SCPI_sock_send(self._session, ':VOLT{} {}'.format(channel, volt))
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+        
     
 
     def getVoltage(self, channel):
+        '''
+        Get the voltage output of a channel
+        '''
         result = SCPI_sock_query(self._session, ':VOLT{}?'.format(channel))
         print(result)
 
 
     def setVoltageOffset(self, channel, volt):
+        '''
+        Set the voltage offset output of a channel
+        '''
         SCPI_sock_send(self._session, ':VOLT{}:OFFS {}'.format(channel, volt))
-        print("AWG Response: " + SCPI_sock_query(self._session,"SYST:ERR?"))
+        
 
     def getVoltageOffset(self, channel):
+        '''
+        Get the voltage offset output of a channel
+        '''
         result = SCPI_sock_query(self._session, ':VOLT{}:OFFS?'.format(channel))
         print(result)
 
