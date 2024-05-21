@@ -149,6 +149,11 @@ class MeasurementSetup:
         self.inst_RFsourceExcitation.set_amplitude(self.RFExcitationAmplitude)
 
         self.alazar_params = {}
+        #
+        # Values that work for recordsPerBuffer and BuffersPerAcquisition
+        #                           25                    20
+        #                           100                   20
+        #                           500                   100
         self.alazar_params['recordsPerBuffer'] = numberOfRecordsPerBuffers  # número de capturas por buffer.
         self.alazar_params['buffersPerAcquisition'] = numberOfBuffers # número de buffers por aquisição.
         self.alazar_params['amplitudeReferenceAlazar'] = amplitudeReferenceAlazar # Intensidade do sinal de referência.
@@ -234,6 +239,8 @@ class MeasurementSetup:
         self.inst_RFsourceMeasurement.stop_rf()
 
         self.attenuation = AttenuationValue
+
+        self.inst_att.set_attenuation(self.attenuation)
 
         mp = ZeroPulse(length = self.RFMeasurementLength)
         
@@ -609,7 +616,7 @@ class MeasurementSetup:
 
         s1.clear()
 
-        s1.add(p1)
+        s1.add(p1,'Q',self.RFMeasurementLength)
         s1.add(mp,'m') # Adiciona o pulso ao sequenciador e o conecta a um canal, no caso o canal "m"
         # Esse canal vai ser especificado a um dos canais do awg. Isso ainda não aconteceu
 
@@ -620,6 +627,8 @@ class MeasurementSetup:
         self.inst_RFsourceExcitation.start_rf()
         self.inst_RFsourceMeasurement.start_rf()
 
+        p1 = SquarePulse(length = self.PiPulse) 
+        mp = ZeroPulse(length = self.RFMeasurementLength) 
 
         # preparar o array de dados capturados
         Is = np.ndarray(len(delays))
@@ -632,8 +641,11 @@ class MeasurementSetup:
             clear_output(wait=True)
 
 
-            self.sequence.channels['q']['delays'][0] = delay # change the delay between the pulses
-            
+            self.sequence.clear()
+
+            self.sequence.add(p1,'Q',self.RFMeasurementLength+delay)
+            self.sequence.add(mp,'m') # Adiciona o pulso ao sequenciador e o conecta a um canal, no caso o canal "m"
+
 
             self.ms.updateChannelData(self.sequence,'Q')
             
@@ -794,3 +806,6 @@ class MeasurementSetup:
         self.inst_RFsourceMeasurement.stop_rf()
 
         return Is,Qs,mags
+    
+
+
