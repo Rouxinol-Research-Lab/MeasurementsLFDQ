@@ -1,6 +1,7 @@
 from struct import unpack
 import numpy as np
 from instruments.SCPI_socket import *
+from time import sleep
 
 class M8195A_driver():
     def __init__(self, address):
@@ -202,13 +203,14 @@ class M8195A_driver():
 
         SCPI_sock_send(self._session,":FREQ:RAST {}".format(freq))
 
-    def downloadWaveform(self):
+    def downloadWaveform(self, channel, offset, length):
         '''
         Download the data from AWG.
         '''
-        size = int(SCPI_sock_query(self._session,':TRAC1:CAT?').split(',')[1])
-        data = SCPI_sock_query(self._session,':TRAC1:DATA? 1, 0,{}'.format(size))
-        return np.array(data.split(',')).astype(int)
+        # write(':trac2:block? 1,0, 4096')
+        SCPI_sock_send(self._session, ':trac{}:block? 1,{},{}'.format(channel, offset, length))
+        sleep(0.05)
+        return self.getDataFromSocketBinary()
 
 
     def setVoltage(self, channel, volt):
@@ -240,12 +242,6 @@ class M8195A_driver():
         '''
         result = SCPI_sock_query(self._session, ':VOLT{}:OFFS?'.format(channel))
         print(result)
-
-    def setSecondChannelToExt(self):
-        '''
-        Sets the second channel to use the external memory (16 GBytes)
-        '''
-        SCPI_sock_send(self.inst_awg._session, ':TRAC2:MMOD EXT') # use external memory, 16 Gbytes
 
     def getChannelSetting(self):
         '''
