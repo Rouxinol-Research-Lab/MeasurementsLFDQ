@@ -177,17 +177,12 @@ class MeasurementSetup:
         self.ms = DataChannelManager(self.inst_awg)
 
         self.ms.clearAwgChannel()
-        self.ms.labelAwgChannel(channel = 1,
-                                channelName = 'm',
-                                markerValue = 2)
 
         self.ms.labelAwgChannel(channel = 2, # o canal do awg
-                                channelName = 'Q',  
-                                markerValue = 1)
+                                channelName = 'Q')
         
         self.ms.labelAwgChannel(channel = 1, # o canal do awg
-                                channelName = 'I',
-                                markerValue = 1)
+                                channelName = 'I')
 
     def capture(self):
         I,Q = self.inst_alazar.capture(preTriggerSamples = self.alazar_params['preTriggerSamples'],                                       

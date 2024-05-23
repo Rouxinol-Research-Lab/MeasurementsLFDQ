@@ -113,10 +113,10 @@ class DataChannelManager:
         self.awgChannels = {}
         self._channelData = {}
 
-    def labelAwgChannel(self, channel, channelName, markerValue):
+    def labelAwgChannel(self, channel, channelName, markerValue = 0):
         self.awgChannels[channelName.lower()] = {'channel':channel, 'markerValue': markerValue}
 
-    def setInstrumentsMarker(self, marker_value = 1, offset = 0):
+    def setInstrumentsMarker(self, marker_value, offset = 0):
         '''
         Set a position to trigger a marker
     
@@ -130,11 +130,13 @@ class DataChannelManager:
 
         
         # get relative time of the first element
-        offset = self._channelData['totalSizeMeasurement']-self._channelData['startupInstrumentIndex']
+        #offset = self._channelData['totalSizeMeasurement']-self._channelData['startupInstrumentIndex']
         
-        a = repeat(0,128) # awg only accepts multiples of 128
-        b = repeat(marker_value,128)
-        data = array(array(tuple(zip(a,b))).flatten(),dtype=int8)
+        dataWithMarker = self.awg.downloadWaveform(1,offset,128)
+        dataBefore = dataWithMarker[5::2] # ignore tag
+
+        markers = repeat(marker_value,128)
+        data = array(array(tuple(zip(dataBefore,markers))).flatten(),dtype=int8)
         self.awg.loadData(data,1,offset)
 
     def clearAwgChannel(self):
