@@ -26,51 +26,6 @@ import matplotlib.pyplot as plt
 
 
 
-def T1f(time, Const, Slope, T):   
-    """
-    Rabi curve using exponential decay: Const + Slope*exp(-time/Tr)*cos(2*pi*time/Period+Phase)
-
-    """
-    return (Const + Slope*np.exp(-time/T))
-
-def T1_g(time, Const,Const1, Slope, T):
-    """
-    Rabi curve using gaussianan decay: Const + amp * N.exp(-0.5*((x-pos)/(wid))**2)
-
-    """
-    return (Const + Slope*np.exp(-0.5*(time+Const1)/T)**2)
-
-
-###########################
-  ###T2 #T2 #T2 #T2 #T2 # T2 ##########
-
-
-# def T2(time, Const, Slope,Tr,Period,Phase):
-
-# 	"""
-# 	T2 curve using: Const + Slope*exp(-time/Tr)*cos(2*pi*time/Period+Phase)
-
-# 	"""
-# 	return (Const + Slope*exp(-time/Tr)*cos(2*pi*time*Period+Phase))
-
-def Ramsey_g(time, Const, Slope,Tr,freq,Phase):
-#     Const,Const1, Slope,Tr,freq,Phase = args
-    """
-    T2 curve using gaussian decay: (Const + Slope*exp(-0.5*((time-Const1)/Tr)**2)*cos( (2*pi*time/freq) + Phase))
-    """
-    
-    return  (Const + Slope*np.exp(-0.5*(time/Tr)**2)*np.cos( (2*np.pi*time/freq) + Phase))
-
-def Ramsey_e(time, Const, Slope,Tr,freq,Phase):
-    
-#     Const, Const1, Slope, Tr, freq, Phase = args
-    """
-    T2 curve using exponential decay: (Const + Slope*exp(-0.5*((time-Const1)/Tr)**2)*cos( (2*pi*time/freq) + Phase))
-    """
-    return (Const + Slope*np.exp(-time/Tr)*np.cos( (2*np.pi*time/freq) + Phase))
-
-    
-
 class MeasurementSetup:
     def __init__(self,
                  awg_address='169.254.101.100',
@@ -104,28 +59,27 @@ class MeasurementSetup:
                  attenuation=30,  # in dB, attenuation
                  backgroundPlotValue=-46):  # in dB
 
-        
-        self.TotalMeasurementLength = TotalMeasurementLength
-        self.RFMeasurementLength = RFMeasurementLength
-        self.RFMeasurementAmplitude = RFMeasurementAmplitude
-        self.RFExcitationLength = RFExcitationLength
-        self.RFExcitationAmplitude = RFExcitationAmplitude
-        self.RFExcitationDelay = RFExcitationDelay
-        self.RFExcitationState = RFExcitationState
-        self.fluxValue = fluxValue
-        self.fluxResistance = fluxResistance
-        self.fluxState = fluxState
-        self.numberOfBuffers = numberOfBuffers
-        self.numberOfRecordsPerBuffers = numberOfRecordsPerBuffers
-        self.waveformHeadCut = waveformHeadCut
-        self.amplitudeReferenceAlazar = amplitudeReferenceAlazar
-        self.decimationValue = decimationValue
-        self.MeasurementFrequency = MeasurementFrequency
-        self.ExcitationFrequency = ExcitationFrequency
-        self.Measurement_IF = Measurement_IF
-        self.Excitation_IF = Excitation_IF
-        self.attenuation = attenuation
-        self.backgroundPlotValue = backgroundPlotValue
+        self.params = {
+        'TotalMeasurementLength': TotalMeasurementLength, # total length in time units of the memory allocated to awg. Should be bigger then the total length of the pulse sequence.
+        'RFMeasurementLength' : RFMeasurementLength, # Length of the measurement pulse
+        'RFMeasurementAmplitude' : RFMeasurementAmplitude, # Amplitude of the measurement signal, should be high enough to feed the mixer.
+        'RFExcitationLength' : RFExcitationLength, # length of the measurement pulse
+        'RFExcitationAmplitude' : RFExcitationAmplitude, # amplitude of the excitation source. should be high enough to feed the mixer.
+        'fluxValue' : fluxValue, # Value in volts of flux applied
+        "fluxResistance": fluxResistance,
+        "fluxState": fluxState,
+        "numberOfBuffers": numberOfBuffers,
+        "numberOfRecordsPerBuffers": numberOfRecordsPerBuffers,
+        "waveformHeadCut": waveformHeadCut,
+        "amplitudeReferenceAlazar": amplitudeReferenceAlazar,
+        "decimationValue": decimationValue,
+        "MeasurementFrequency": MeasurementFrequency,
+        "ExcitationFrequency": ExcitationFrequency,
+        "Measurement_IF": Measurement_IF,
+        "Excitation_IF": Excitation_IF,
+        "attenuation": attenuation,
+        "backgroundPlotValue": backgroundPlotValue
+        }
 
         self.inst_alazar = ATS9872_driver()
         self.inst_awg = M8195A_driver(awg_address)
@@ -214,8 +168,9 @@ class MeasurementSetup:
         self.alazar_params['TTL'] = True # Configuração do sinal de trigger. É o que funcionaou quando estava trigando pelo AWG. Quando é pelo delay generator, não usa isso.
         self.alazar_params['save'] = False # Caso queira salvar todos os pontos adquiridos na aquisição em formato binário.
 
-        self.DefaultAlazarSamplingRate = 1e9
-        samplingRate = self.DefaultAlazarSamplingRate/self.alazar_params['decimationValue']
+    
+        self.params['DefaultAlazarSamplingRate'] = 1e9
+        samplingRate =  self.params['DefaultAlazarSamplingRate']/self.alazar_params['decimationValue']
 
         # O número pontos por aquisição depende do sampling rate. Tem que ser múltiplos de 256.
         self.alazar_params['postTriggerSamples'] = int(self.RFMeasurementLength*samplingRate/256)*256    # quantos pontos depois do trigger.
@@ -259,12 +214,12 @@ class MeasurementSetup:
         
         self.sequence = s
 
-        samplingRate = self.DefaultAlazarSamplingRate/self.alazar_params['decimationValue']
+        samplingRate = self.params['DefaultAlazarSamplingRate']/self.alazar_params['decimationValue']
 
         self.RFMeasurementLength = self.sequence.channels['m']['pulses'][0].length
-        self.alazar_params['postTriggerSamples'] = int(self.RFMeasurementLength*samplingRate/256)*256    # quantos pontos depois do trigger.
+        self.alazar_params['postTriggerSamples'] = int(self.params['RFMeasurementLength']*samplingRate/256)*256    # quantos pontos depois do trigger.
 
-        self.channelData = self.ms.prepareChannelData(self.sequence, self.TotalMeasurementLength) # add total length, pulses and relaxation to alloc the necessary bytes in memory
+        self.channelData = self.ms.prepareChannelData(self.sequence, self.params['TotalMeasurementLength']) # add total length, pulses and relaxation to alloc the necessary bytes in memory
 
         # deleta toda memória do awg
         self.inst_awg.freeMemory()
