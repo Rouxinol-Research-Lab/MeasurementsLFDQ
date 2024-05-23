@@ -24,6 +24,53 @@ from IPython.display import clear_output
 
 import matplotlib.pyplot as plt
 
+
+
+def T1f(time, Const, Slope, T):   
+    """
+    Rabi curve using exponential decay: Const + Slope*exp(-time/Tr)*cos(2*pi*time/Period+Phase)
+
+    """
+    return (Const + Slope*np.exp(-time/T))
+
+def T1_g(time, Const,Const1, Slope, T):
+    """
+    Rabi curve using gaussianan decay: Const + amp * N.exp(-0.5*((x-pos)/(wid))**2)
+
+    """
+    return (Const + Slope*np.exp(-0.5*(time+Const1)/T)**2)
+
+
+###########################
+  ###T2 #T2 #T2 #T2 #T2 # T2 ##########
+
+
+# def T2(time, Const, Slope,Tr,Period,Phase):
+
+# 	"""
+# 	T2 curve using: Const + Slope*exp(-time/Tr)*cos(2*pi*time/Period+Phase)
+
+# 	"""
+# 	return (Const + Slope*exp(-time/Tr)*cos(2*pi*time*Period+Phase))
+
+def Ramsey_g(time, Const, Slope,Tr,freq,Phase):
+#     Const,Const1, Slope,Tr,freq,Phase = args
+    """
+    T2 curve using gaussian decay: (Const + Slope*exp(-0.5*((time-Const1)/Tr)**2)*cos( (2*pi*time/freq) + Phase))
+    """
+    
+    return  (Const + Slope*np.exp(-0.5*(time/Tr)**2)*np.cos( (2*np.pi*time/freq) + Phase))
+
+def Ramsey_e(time, Const, Slope,Tr,freq,Phase):
+    
+#     Const, Const1, Slope, Tr, freq, Phase = args
+    """
+    T2 curve using exponential decay: (Const + Slope*exp(-0.5*((time-Const1)/Tr)**2)*cos( (2*pi*time/freq) + Phase))
+    """
+    return (Const + Slope*np.exp(-time/Tr)*np.cos( (2*np.pi*time/freq) + Phase))
+
+    
+
 class MeasurementSetup:
     def __init__(self,
                  awg_address='169.254.101.100',
@@ -107,9 +154,9 @@ class MeasurementSetup:
         self.inst_awg.setDualWithMarker()
 
         # usar a memória externa para o canal 2
-        SCPI_sock_send(self.inst_awg._session, ':TRAC2:MMOD EXT') # use external memory, 16 Gbytes
+        self.inst_awg.setChannelMemoryToExtended(2)
         # dividir a memória em 2
-        SCPI_sock_send(self.inst_awg._session, ':INST:MEM:EXT:RDIV DIV2') # devide memory, one for each channel
+        self.inst_awg.setMemoryDivision(2)
 
         # markers should have 1 V amplitude and offset 0.5
         self.inst_awg.setVoltage(3,1) 
@@ -237,6 +284,9 @@ class MeasurementSetup:
     def prepareForCavityMeasure(self, AttenuationValue):
         self.inst_awg.stop()
         self.inst_RFsourceMeasurement.stop_rf()
+        self.inst_RFsourceExcitation.stop_rf()
+
+        self.RFExcitationState = False
 
         self.attenuation = AttenuationValue
 
@@ -253,10 +303,42 @@ class MeasurementSetup:
         # Esse canal vai ser especificado a um dos canais do awg. Isso ainda não aconteceu
 
         self.preparePulseSequence(s1)
-            
+
+    def prepareForCavityWithExcitationMeasure(self, ExcitationLength, ExcitationFrequency, AttenuationValue):
+        self.inst_awg.stop()
+        self.inst_RFsourceMeasurement.stop_rf()
+        self.inst_RFsourceExcitation.stop_rf()
+
+        self.attenuation = AttenuationValue
+        self.ExcitationFrequency = ExcitationFrequency
+        self.ExcitationPulseLength = ExcitationLength
+
+        self.RFExcitationState = True
+
+        self.inst_att.set_attenuation(self.attenuation)
+
+        p1 = SquarePulse(length= self.ExcitationPulseLength)
+        mp = ZeroPulse(length = self.RFMeasurementLength)
+        
+        s1 = PulseSequence('Cavity') # dá um nome da medida
+        s1.startup_delay = 1e-6 # um delay para ligar antecipadamente a fonte de excitação. liga a fonte antecipadamente por esse valor antes do primeiro pulso de excitação
+
+        s1.clear()
+
+        s1.add(p1,'Q', self.RFMeasurementLength)
+        s1.add(mp,'m') # Adiciona o pulso ao sequenciador e o conecta a um canal, no caso o canal "m"
+        # Esse canal vai ser especificado a um dos canais do awg. Isso ainda não aconteceu
+
+        self.preparePulseSequence(s1)
+
+
     def measureCavity(self, freqs):
         self.inst_awg.start()
         self.inst_RFsourceMeasurement.start_rf()
+
+        if self.RFExcitationState:
+            self.inst_RFsourceExcitation.start_rf()
+
 
         Is = np.ndarray(len(freqs))
         Qs = np.ndarray(len(freqs))
@@ -286,6 +368,7 @@ class MeasurementSetup:
 
         self.inst_awg.stop()
         self.inst_RFsourceMeasurement.stop_rf()
+        self.inst_RFsourceExcitation.stop_rf()
 
         return Is,Qs,mags
     
@@ -685,6 +768,8 @@ class MeasurementSetup:
 
         self.inst_RFsourceExcitation.set_frequency(ExcitionFrequency)
 
+        self.inst_RFsourceMeasurement.set_frequency(self.MeasurementFrequency-self.Measurement_IF)
+
         p1 = SquarePulse(length = 0.1e-9) 
 
         mp = ZeroPulse(length = self.RFMeasurementLength) 
@@ -807,5 +892,3 @@ class MeasurementSetup:
 
         return Is,Qs,mags
     
-
-
