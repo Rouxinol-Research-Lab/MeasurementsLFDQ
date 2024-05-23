@@ -42,8 +42,6 @@ class MeasurementSetup:
                  RFMeasurementAmplitude=18,  # in dBm, this is a local oscillator, it feeds two mixers.
                  RFExcitationLength=20e-6,  # in seconds
                  RFExcitationAmplitude=11,  # in dBm, this is a local oscillator, it feeds one mixer.
-                 RFExcitationDelay=0.1e-9,  # delay before the next pulse
-                 RFExcitationState=False,  # if the excitation should be on while the measurement happens
                  fluxValue=0,  # in volts
                  fluxResistance=8e3,  # in ohms, this is for logging only. it is resistance used for the flux source
                  fluxState=True,  # if the flux should be on while the measurement happens
