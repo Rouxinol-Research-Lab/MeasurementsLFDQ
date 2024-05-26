@@ -13,8 +13,8 @@ class DragPulseConstructor():
 
     def build(self):
         a = DragPulseHolder()
-        a.I = DragPulse(length = self.length, alpha = self.alpha, beta = self.beta, sigma = self.sigma)
-        a.Q = DragPulse(length = self.length, alpha = self.alpha, beta = self.beta, sigma = self.sigma)
+        a.I = DragPulse(length = self.length, amplitude = 1, alpha = self.alpha, beta = self.beta, sigma = self.sigma, quadrature = 'I' )
+        a.Q = DragPulse(length = self.length, amplitude = 1, alpha = self.alpha, beta = self.beta, sigma = self.sigma, quadrature = 'Q')
 
         return a
 
@@ -34,8 +34,9 @@ class DragPulse(Pulse):
     def build(self, timestep, initial_time = 0):
         t = np.arange(initial_time, initial_time + self.length, timestep)
 
-        pulse = self.amplitude*self.alpha*np.exp(-(t-self.mu)**2/2/self.sigma**2)
-        if self.upper() == 'Q':
+        
+        pulse = self.amplitude*self.alpha*np.exp(-(t-initial_time-self.mu)**2/2/self.sigma**2)
+        if self.quadrature.upper() == 'Q':
             pulse = self.beta*(t-self.mu)/self.sigma*pulse
 
         return t, pulse
