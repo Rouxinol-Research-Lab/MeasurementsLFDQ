@@ -130,13 +130,14 @@ class DataChannelManager:
 
         
         # get relative time of the first element
-        #offset = self._channelData['totalSizeMeasurement']-self._channelData['startupInstrumentIndex']
+        offset = self._channelData['totalSizeMeasurement']-self._channelData['startupInstrumentIndex']
         
-        dataWithMarker = self.awg.downloadWaveform(1,offset,128)
-        dataBefore = dataWithMarker[5::2] # ignore tag
+        a = repeat(0,128)
+        #dataWithMarker = self.awg.downloadWaveform(1,offset,128)
+        #dataBefore = dataWithMarker[5::2] # ignore tag
 
         markers = repeat(marker_value,128)
-        data = array(array(tuple(zip(dataBefore,markers))).flatten(),dtype=int8)
+        data = array(array(tuple(zip(a,markers))).flatten(),dtype=int8)
         self.awg.loadData(data,1,offset)
 
     def clearAwgChannel(self):
@@ -269,7 +270,7 @@ class DataChannelManager:
                 last_relative_delay = relative_delay
 
         startupInstrumentIndex = int(abs(last_relative_delay-sequence.startup_delay)*awgRate/256)*256+256
-        totalSizeMeasurement = int(totalExperimentDuration*awgRate*2/128)*128
+        totalSizeMeasurement = int(totalExperimentDuration*awgRate/128)*128
         channelData = {'channels':{},'startupInstrumentIndex': startupInstrumentIndex, 'totalSizeMeasurement' : totalSizeMeasurement, 'awgRate': awgRate}
 
         for (channelName, channelInfo) in self.awgChannels.items():

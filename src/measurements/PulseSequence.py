@@ -13,7 +13,7 @@ class PulseSequence:
     that will be loaded into AWG. 
 
     '''
-    def __init__(self, name):
+    def __init__(self, name, startup_delay):
         '''
         Init the pulse sequence.
         name: name of this sequence of pulses.
@@ -70,6 +70,7 @@ class PulseSequence:
         '''
         self.name = name
         self.channels = {} # this dictionary holds the pulses for all channels
+        self.startup_delay = startup_delay
 
     def add(self, p, channel, delay = 0.1e-9):
         '''

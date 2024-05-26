@@ -212,7 +212,7 @@ class MeasurementSetup:
         self.RFMeasurementLength = self.sequence.channels['m']['pulses'][0].length
         self.alazar_params['postTriggerSamples'] = int(self.params['RFMeasurementLength']*samplingRate/256)*256    # quantos pontos depois do trigger.
 
-        self.channelData = self.ms.prepareChannelData(self.sequence, self.params['TotalMeasurementLength']) # add total length, pulses and relaxation to alloc the necessary bytes in memory
+        self.ms.prepareChannelData(self.sequence, self.params['TotalMeasurementLength']) # add total length, pulses and relaxation to alloc the necessary bytes in memory
 
         # deleta toda memória do awg
         self.inst_awg.freeMemory()
